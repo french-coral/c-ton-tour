@@ -11,8 +11,10 @@ export default function SignUp(){
 
     async function handleSubmit(e) {
         e.preventDefault()
-        console.log('submitting with:', email, password, userName)
+        setErrorMsg(null)
+ 
         const { error } = await signUp(email, password, userName)
+
         if (error) setErrorMsg(error.message)
         else window.location.href = "/team-setup"
     }

@@ -20,6 +20,8 @@ export default function TeamSetup(){
 
         if (result.error) setErrorMsg(result.error.message)
         else window.location.href = "/"
+        console.log("Went through team setup")
+        
     }
 
     return (
@@ -58,7 +60,7 @@ export default function TeamSetup(){
                 <button type="submit">
                     {mode === "create" ? "Créer" : "Rejoindre"}
                 </button>
-                
+
                 {errorMsg && <p>{errorMsg}</p>}
 
             </form>
