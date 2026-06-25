@@ -21,7 +21,7 @@ export async function login(email, password) {
 }
 
 
-// Insert a rider_profile into team_riders
+// Insert a rider in a team
 export async function addRider(teamId, name, avatarUrl = null, profileId = null) {
     
         // You also record membership if a rider is linked to a real account
@@ -42,7 +42,7 @@ export async function addRider(teamId, name, avatarUrl = null, profileId = null)
             avatar_url: avatarUrl,
         })
 
-    if (error) return { error }
+    return { error }
 }
 
 
@@ -67,7 +67,7 @@ export async function createTeam(teamName, username, avatarUrl = null) {
 
     console.log('team:', team)
     console.log('userData.user:', userData.user)
-    
+
     const { error: riderError } = await addRider(team.id, username, avatarUrl, userData.user.id)
 
     return { error: riderError, team }
