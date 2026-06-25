@@ -147,7 +147,7 @@ export async function reorderQueue(orderedIds) {
 
 
 export async function replenishQueueIfNeeded(teamId) {
-    const targetLength = 15
+    const targetLength = 5
 
     // How many real entries are currently in the queue?
     const currentQueueResult = await supabase
@@ -393,4 +393,24 @@ export async function getActiveRiders(teamId) {
     .eq('status', 'active')
 
   return { riders: ridersResult.data, error: ridersResult.error }
+}
+
+// Remove one specific entry from the queue
+export async function removeFromQueue(queueEntryId) {
+  const deleteResult = await supabase
+    .from('run_queue')
+    .delete()
+    .eq('id', queueEntryId)
+
+  return { error: deleteResult.error }
+}
+
+// Change how many laps a specific queue entry is planned for
+export async function updateQueueEntryLapCount(queueEntryId, newLapCount) {
+  const updateResult = await supabase
+    .from('run_queue')
+    .update({ lap_count: newLapCount })
+    .eq('id', queueEntryId)
+
+  return { error: updateResult.error }
 }

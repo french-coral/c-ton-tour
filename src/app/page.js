@@ -8,6 +8,9 @@ import {
   logLapAndAdvance,
   getActiveRiders,
   reorderQueue,
+  removeFromQueue,
+  updateQueueEntryLapCount,
+  addToQueue,
 } from "@/lib/queue"
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
@@ -27,6 +30,10 @@ export default function MainPage() {
 	const [lapCount, setLapCount] = useState(1)
 	const [finishTime, setFinishTime] = useState("")
 	const [activeRiders, setActiveRiders] = useState([])
+
+	const [isAddingToQueue, setIsAddingToQueue] = useState(false)
+	const [riderToAdd, setRiderToAdd] = useState("")
+	const [lapCountToAdd, setLapCountToAdd] = useState(1)
 
 
 ////////////////////////////////////////////////////////////
@@ -84,6 +91,37 @@ export default function MainPage() {
 	}, [])
 
 
+	async function reloadEverything() {
+		const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+
+		const stateResult = await getTeamState(teamId)
+
+		if (stateResult.error) {
+			console.error(stateResult.error)
+			return
+		}
+
+		setTeam(stateResult.team)
+		setQueue(stateResult.queue)
+
+		const riderIds = []
+
+		if (stateResult.team.current_rider) {
+			riderIds.push(stateResult.team.current_rider.id)
+		}
+
+		for (const queueEntry of stateResult.queue) {
+			riderIds.push(queueEntry.team_rider.id)
+		}
+
+		if (riderIds.length > 0) {
+			const averagesResult = await getAverageLapTimesForRiders(riderIds)
+			if (!averagesResult.error) {
+			setAveragesByRiderId(averagesResult.averages)
+			}
+		}
+	}
+
 ////////////////////////////////////////////////////////////
 ////	     	   Update every second				    ////
 ///////////////////////////////////////////////////////////
@@ -106,10 +144,54 @@ export default function MainPage() {
 		return () => clearInterval(intervalId)
 	}, [team])
 
+
+	useEffect(function () {
+		const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+
+		// Create a "channel" - this is just a named subscription
+		const channel = supabase
+			.channel('team-updates-' + teamId)
+
+			// Listen for any change on the teams table, for this specific team
+			.on(
+			'postgres_changes',
+			{
+				event: '*',
+				schema: 'public',
+				table: 'teams',
+				filter: 'id=eq.' + teamId,
+			},
+			function () {
+				reloadEverything()
+			}
+			)
+
+			// Also listen for any change on the run_queue table, for this team
+			.on(
+			'postgres_changes',
+			{
+				event: '*',
+				schema: 'public',
+				table: 'run_queue',
+				filter: 'team_id=eq.' + teamId,
+			},
+			function () {
+				reloadEverything()
+			}
+			)
+
+			// Actually start listening
+			.subscribe()
+
+		// Cleanup - stop listening when the page is closed/left
+		return function () {
+			supabase.removeChannel(channel)
+		}
+	}, [])
+
 	if (!team) {
 		return <p className="text-center mt-10 text-gray-500">Chargement...</p>
 	}
-
 
 ////////////////////////////////////////////////////////////
 ////	      		  Tools formatting			 	   ////
@@ -200,12 +282,13 @@ export default function MainPage() {
 	for (const queueEntry of queue) {
 		const etaForThisEntry = cumulativeSeconds
 
-		queueWithEtas.push({ //Queue made of dict with riders infos
-			id: queueEntry.id,
-			riderName: queueEntry.team_rider.name,
-			lapCount: queueEntry.lap_count,
-			etaSeconds: etaForThisEntry,
-		})
+	queueWithEtas.push({
+		id: queueEntry.id,
+		riderId: queueEntry.team_rider.id,
+		riderName: queueEntry.team_rider.name,
+		lapCount: queueEntry.lap_count,
+		etaSeconds: etaForThisEntry,
+	})
 
 		const riderAverage = averagesByRiderId[queueEntry.team_rider.id]
 
@@ -288,9 +371,9 @@ export default function MainPage() {
 		// Update what's shown on screen immediately, so it feels instant
 		setQueue(reordered.map(function (entry) {
 			return {
-			id: entry.id,
-			team_rider: { id: entry.id, name: entry.riderName },
-			lap_count: entry.lapCount,
+				id: entry.id,
+				team_rider: { id: entry.riderId, name: entry.riderName },
+				lap_count: entry.lapCount,
 			}
 		}))
 
@@ -300,6 +383,34 @@ export default function MainPage() {
 		})
 
 		await reorderQueue(orderedIds)
+	}
+
+/////////////////////////////////////////////////////////////
+////	    	   	Queue Entries Editing				////
+///////////////////////////////////////////////////////////
+
+	async function handleDeleteQueueEntry(queueEntryId) {
+		await removeFromQueue(queueEntryId)
+		reloadEverything()
+	}
+
+	async function handleChangeQueueLapCount(queueEntryId, newLapCount) {
+		await updateQueueEntryLapCount(queueEntryId, newLapCount)
+		reloadEverything()
+	}
+
+	async function handleAddRiderToQueue() {
+		if (!riderToAdd) {
+			return
+		}
+
+		await addToQueue(team.id, riderToAdd, lapCountToAdd)
+
+		setRiderToAdd("")
+		setLapCountToAdd(1)
+		setIsAddingToQueue(false)
+
+		reloadEverything()
 	}
 
 ////////////////////////////////////////////////////////////
@@ -371,39 +482,106 @@ export default function MainPage() {
 				</button>
 
 				{isQueueOpen ? (
-				<div className="fixed inset-0 bg-black/40 flex items-center justify-center p-5">
-					<div className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm max-h-[80vh] overflow-y-auto">
-						<div className="flex items-center justify-between mb-4">
-							<p className="font-medium text-lg">File d'attente</p>
-							<button
-							onClick={function () { setIsQueueOpen(false) }}
-							className="text-gray-500 dark:text-gray-400 text-sm">
-							Fermer
-							</button>
-						</div>
+					<div
+						className="fixed inset-0 bg-black/40 flex items-center justify-center p-5"
+						onClick={function () { setIsQueueOpen(false) }}>
+						
+							<div
+								className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm max-h-[80vh] overflow-y-auto"
+								onClick={function (e) { e.stopPropagation() }}>
 
-						<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-							<SortableContext
-								items={queueWithEtas.map(function (entry) { return entry.id })}
-								strategy={verticalListSortingStrategy}
-							>
-								<div className="flex flex-col gap-2">
-								{queueWithEtas.map(function (entry) {
-									return (
-									<QueueItem
-										key={entry.id}
-										entry={{
-										id: entry.id,
-										riderName: entry.riderName,
-										lapCount: entry.lapCount,
-										etaText: formatSeconds(entry.etaSeconds),
-										}}
-									/>
-									)
-								})}
+								<div className="flex items-center justify-between mb-4">
+									<p className="font-medium text-lg">File d'attente</p>
+									<button
+									onClick={function () { setIsQueueOpen(false) }}
+									aria-label="Fermer"
+									className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
+									>
+									✕
+									</button>
+							</div>
+
+							<div className="mb-4">
+								{isAddingToQueue ? (
+									<div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex flex-col gap-2">
+
+										<select
+											value={riderToAdd}
+											onChange={function (e) { setRiderToAdd(e.target.value) }}
+											className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm"
+										>
+											<option value="">Choisir un coureur</option>
+											{activeRiders.map(function (rider) {
+												return (
+													<option key={rider.id} value={rider.id}>
+														{rider.name}
+													</option>
+											)
+											})}
+										</select>
+
+										<input
+											type="number"
+											min="1"
+											value={lapCountToAdd}
+											onChange={function (e) { setLapCountToAdd(Number(e.target.value)) }}
+											className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm"
+										/>
+
+										<div className="flex gap-2">
+											<button
+											onClick={function () { setIsAddingToQueue(false) }}
+											className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm">
+
+											Annuler
+
+											</button>
+											<button
+											onClick={handleAddRiderToQueue}
+											className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm">
+											
+											Ajouter
+
+											</button>
+										</div>
+
+									</div>
+								) : (
+									<button
+										onClick={function () { setIsAddingToQueue(true) }}
+										aria-label="Ajouter un coureur"
+										className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
+
+									+  Ajouter un coureur
+
+									</button>
+								)}
 								</div>
-							</SortableContext>
-						</DndContext>
+
+							<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+								<SortableContext
+									items={queueWithEtas.map(function (entry) { return entry.id })}
+									strategy={verticalListSortingStrategy}
+								>
+									<div className="flex flex-col gap-2">
+									{queueWithEtas.map(function (entry) {
+										return (
+											<QueueItem
+												key={entry.id}
+												entry={{
+													id: entry.id,
+													riderName: entry.riderName,
+													lapCount: entry.lapCount,
+													etaText: formatSeconds(entry.etaSeconds),
+												}}
+												onDelete={handleDeleteQueueEntry}
+												onChangeLapCount={handleChangeQueueLapCount}
+											/>
+										)
+									})}
+									</div>
+								</SortableContext>
+							</DndContext>
 					</div>
 				</div>
 				) : null}
@@ -415,9 +593,24 @@ export default function MainPage() {
 				</button>
 
 				{isAddLapOpen ? (
-				<div className="fixed inset-0 bg-black/40 flex items-center justify-center p-5">
-					<div className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm">
-						<p className="font-medium text-lg mb-4">Ajouter un temps</p>
+				<div 
+					className="fixed inset-0 bg-black/40 flex items-center justify-center p-5"
+					onClick={function () { setIsAddLapOpen(false) }}>
+
+					<div 
+						className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm max-h-[80vh] overflow-y-auto"
+						onClick={function (e) { e.stopPropagation() }}>
+						
+						<div className="flex items-center justify-between mb-4">
+							<p className="font-medium text-lg mb-4">Ajouter un temps</p>
+							<button
+								onClick={function () { setIsAddLapOpen(false) }}
+								aria-label="Fermer"
+								className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
+							>
+							✕
+							</button>
+						</div>
 
 						<form onSubmit={handleSubmitLap} className="flex flex-col gap-3">
 
