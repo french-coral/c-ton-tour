@@ -363,3 +363,34 @@ export async function logLapAndAdvance(teamId, riderId, lapCount, finishTimeIso)
 
     return { error: null }
 }
+
+
+// Change WHO is currently running, without touching their start time
+export async function updateCurrentRider(teamId, newRiderId) {
+  const updateResult = await supabase
+    .from('teams')
+    .update({ current_rider_id: newRiderId })
+    .eq('id', teamId)
+
+  return { error: updateResult.error }
+}
+
+// Change how many laps the CURRENT leg is meant to cover
+export async function updateCurrentLegLapCount(teamId, newLapCount) {
+  const updateResult = await supabase
+    .from('teams')
+    .update({ current_leg_lap_count: newLapCount })
+    .eq('id', teamId)
+
+  return { error: updateResult.error }
+}
+
+export async function getActiveRiders(teamId) {
+  const ridersResult = await supabase
+    .from('team_riders')
+    .select('id, name')
+    .eq('team_id', teamId)
+    .eq('status', 'active')
+
+  return { riders: ridersResult.data, error: ridersResult.error }
+}
