@@ -224,3 +224,142 @@ export async function replenishQueueIfNeeded(teamId) {
 
     return { error: insertResult.error }
 }
+
+
+
+export async function getAverageLapTimesForRiders(riderIds) {
+    const lapsResult = await supabase
+        .from('laps')
+        .select('team_rider_id, time_seconds, lap_count')
+        .in('team_rider_id', riderIds)
+
+    if (lapsResult.error) {
+        return { averages: null, error: lapsResult.error }
+    }
+
+    const allLaps = lapsResult.data
+
+    // We will build a plain object that maps a rider's id to their average
+    const averages = {}
+
+    for (const riderId of riderIds) {
+        const lapsForThisRider = allLaps.filter(function (lap) {
+        return lap.team_rider_id === riderId
+        })
+
+        if (lapsForThisRider.length === 0) {
+            averages[riderId] = null
+            continue
+        }
+
+        let totalTime = 0
+        let totalLaps = 0
+
+        for (const lap of lapsForThisRider) {
+        totalTime = totalTime + lap.time_seconds
+        totalLaps = totalLaps + lap.lap_count
+        }
+
+        averages[riderId] = totalTime / totalLaps
+    }
+
+    return { averages, error: null }
+}
+
+
+export async function logLapAndAdvance(teamId, riderId, lapCount, finishTimeIso) {
+
+    // Get the team's current state, since we need to know
+    // when the current leg actually started
+    const teamResult = await supabase
+        .from('teams')
+        .select('current_leg_started_at')
+        .eq('id', teamId)
+        .single()
+
+    if (teamResult.error) {
+        return { error: teamResult.error }
+    }
+
+    const legStartedAt = teamResult.data.current_leg_started_at
+
+    // Calculate the real duration of the lap that just finished
+    const startTime = new Date(legStartedAt)
+    const finishTime = new Date(finishTimeIso)
+    const durationInSeconds = Math.round((finishTime - startTime) / 1000)
+
+    // Save this lap with its real, calculated duration
+    const insertLapResult = await supabase
+        .from('laps')
+        .insert({
+            team_rider_id: riderId,
+            lap_count: lapCount,
+            time_seconds: durationInSeconds,
+        })
+
+    if (insertLapResult.error) {
+        return { error: insertLapResult.error }
+    }
+
+    // Find whoever is next in the queue
+    const nextInQueueResult = await supabase
+        .from('run_queue')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('position', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+    if (nextInQueueResult.error) {
+        return { error: nextInQueueResult.error }
+    }
+
+    const nextEntry = nextInQueueResult.data
+
+    if (!nextEntry) {
+        return { error: { message: 'Queue is empty, cannot advance' } }
+    }
+
+    // Promote that next rider, but importantly, set their
+    // leg start time to the REAL finish time we were given,
+    // not to "predicted" one
+    const updateTeamResult = await supabase
+        .from('teams')
+        .update({
+            current_rider_id: nextEntry.team_rider_id,
+            current_leg_started_at: finishTimeIso,
+            current_leg_lap_count: nextEntry.lap_count,
+        })
+        .eq('id', teamId)
+
+    if (updateTeamResult.error) {
+        return { error: updateTeamResult.error }
+    }
+
+    // Remove that entry from the queue, since they are running now
+    const deleteResult = await supabase
+        .from('run_queue')
+        .delete()
+        .eq('id', nextEntry.id)
+
+    if (deleteResult.error) {
+        return { error: deleteResult.error }
+    }
+
+    // Top up the queue automatically, if the team has that setting on
+    const teamSettingsResult = await supabase
+        .from('teams')
+        .select('auto_fill')
+        .eq('id', teamId)
+        .single()
+
+    if (teamSettingsResult.error) {
+        return { error: teamSettingsResult.error }
+    }
+
+    if (teamSettingsResult.data.auto_fill) {
+        await replenishQueueIfNeeded(teamId)
+    }
+
+    return { error: null }
+}
