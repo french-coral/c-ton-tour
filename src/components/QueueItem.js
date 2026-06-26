@@ -3,14 +3,22 @@ import { CSS } from "@dnd-kit/utilities"
 
 export default function QueueItem({ entry, onDelete, onChangeLapCount }) {
 
-  // useSortable gives everything needed to make this one row draggable (with a fucking mobile)
-  const sortable = useSortable({ id: entry.id })
+    // useSortable gives everything needed to make this one row draggable (with a fucking mobile)
+    const sortable = useSortable({ id: entry.id })
 
-  // This builds the actual CSS transform that moves the row visually while it is being dragged
-  const style = {
-    transform: CSS.Transform.toString(sortable.transform),
-    transition: sortable.transition,
-  }
+    // This builds the actual CSS transform that moves the row visually while it is being dragged
+    const style = {
+        transform: CSS.Transform.toString(sortable.transform),
+        transition: sortable.transition,
+    }
+
+    function getInitials(name) {
+        const parts = name.trim().split(" ")
+        const firstInitial = parts[0] ? parts[0][0] : ""
+        const secondInitial = parts[1] ? parts[1][0] : ""
+        return (firstInitial + secondInitial).toUpperCase()
+    }
+
 
   return (
     <div
@@ -25,6 +33,14 @@ export default function QueueItem({ entry, onDelete, onChangeLapCount }) {
 
             ⠿
 
+        </div>
+
+        <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center font-medium text-xs flex-shrink-0 overflow-hidden">
+            {entry.riderAvatarUrl ? (
+                <img src={entry.riderAvatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+                getInitials(entry.riderName)
+            )}
         </div>
 
         <div className="flex-1">

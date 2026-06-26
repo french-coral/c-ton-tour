@@ -1,70 +1,254 @@
 "use client"
 
-import { createTeam, joinTeam } from "@/lib/auth"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import {
+  createTeam,
+  joinTeam,
+  getTeamByJoinCode,
+  getUnclaimedRiders,
+  claimRider,
+} from "@/lib/auth"
+import { updateMyTeamRiderName } from "@/lib/profile"
+import { getMyProfile } from "@/lib/profile"
 
-export default function TeamSetup(){
-    const [mode, setMode] = useState("create") // "create" or "join"
+export default function TeamSetup() {
+    const [mode, setMode] = useState("create")
+
+    // Create-team fields
     const [teamName, setTeamName] = useState("")
+    const [createUsername, setCreateUsername] = useState("")
+
+    // Join flow, step by step
+    const [joinStep, setJoinStep] = useState("enterCode")
     const [joinCode, setJoinCode] = useState("")
-    const [username, setUsername] = useState("")
+    const [foundTeam, setFoundTeam] = useState(null)
+    const [unclaimedRiders, setUnclaimedRiders] = useState([])
+    const [selectedRiderToClaim, setSelectedRiderToClaim] = useState(null)
+    const [finalUsername, setFinalUsername] = useState("")
+
     const [errorMsg, setErrorMsg] = useState(null)
 
-    async function handleSubmit(e){
+    useEffect(function () {
+        async function loadDefaultUsername() {
+        const profileResult = await getMyProfile()
+        if (!profileResult.error) {
+            setCreateUsername(profileResult.profile.username)
+            setFinalUsername(profileResult.profile.username)
+        }
+        }
+        loadDefaultUsername()
+    }, [])
+
+    async function handleCreateTeam(e) {
         e.preventDefault()
         setErrorMsg(null)
 
-        const result = mode === "create"
-            ? await createTeam(teamName, username)
-            : await joinTeam(joinCode, username)
+        const result = await createTeam(teamName, createUsername)
 
-        if (result.error) setErrorMsg(result.error.message)
-        else window.location.href = "/"
-        console.log("Went through team setup")
-        
+        if (result.error) {
+        setErrorMsg(result.error.message)
+        } else {
+        window.location.href = "/"
+        }
+    }
+
+    async function handleSubmitJoinCode(e) {
+        e.preventDefault()
+        setErrorMsg(null)
+
+        const teamResult = await getTeamByJoinCode(joinCode)
+
+        if (teamResult.error || !teamResult.team) {
+        setErrorMsg("Code d'equipe invalide")
+        return
+        }
+
+        const unclaimedResult = await getUnclaimedRiders(teamResult.team.id)
+
+        setFoundTeam(teamResult.team)
+        setUnclaimedRiders(unclaimedResult.riders || [])
+        setJoinStep("claimChoice")
+    }
+
+    function handleSelectExistingRider(rider) {
+        setSelectedRiderToClaim(rider)
+        setFinalUsername(rider.name)
+        setJoinStep("confirmClaim")
+    }
+
+    function handleSelectNewMember() {
+        setSelectedRiderToClaim(null)
+        setJoinStep("newMemberUsername")
+    }
+
+    async function handleConfirmClaim() {
+        if (!selectedRiderToClaim) {
+            setErrorMsg("Une erreur est survenue, merci de reessayer.")
+            setJoinStep("claimChoice")
+            return
+        }
+
+        setErrorMsg(null)
+        const claimResult = await claimRider(selectedRiderToClaim.id)
+
+        if (claimResult.error) {
+            setErrorMsg(claimResult.error.message)
+            return
+        }
+
+        if (finalUsername !== selectedRiderToClaim.name) {
+            await updateMyTeamRiderName(selectedRiderToClaim.id, finalUsername)
+        }
+
+        window.location.href = "/"
+    }
+
+    async function handleConfirmNewMember() {
+        setErrorMsg(null)
+
+        const result = await joinTeam(joinCode, finalUsername)
+
+        if (result.error) {
+        setErrorMsg(result.error.message)
+        } else {
+        window.location.href = "/"
+        }
     }
 
     return (
-        <div>
-            <button onClick={() => setMode("create")} disabled={mode === "create"}>
-                Créer une équipe
-            </button>
-            <button onClick={() => setMode("join")} disabled={mode === "join"}>
-                Rejoindre une équipe (code)
-            </button>
+        <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5 flex flex-col items-center justify-center">
+        <div className="max-w-sm w-full">
 
-            <form onSubmit={handleSubmit}>
-                <input 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Pseudo d'équipe"
-                    autoComplete="off"
-                />
+            <h1 className="text-xl font-medium text-center mb-5">Ton equipe</h1>
 
-                {mode === "create" ? (
-                    <input 
-                        value={teamName}
-                        onChange={(e) => setTeamName(e.target.value)}
-                        placeholder="Nom de l'équipe"
-                        autoComplete="off"
-                    />
-                ): (
-                    <input 
-                        value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value)}
-                        placeholder="Code d'équipe"
-                        autoComplete="off"
-                    />
-                    )
+            <div className="flex gap-2 mb-4">
+            <button
+                onClick={function () { setMode("create") }}
+                className={
+                mode === "create"
+                    ? "flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium"
+                    : "flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400"
                 }
-                <button type="submit">
-                    {mode === "create" ? "Créer" : "Rejoindre"}
+            >
+                Creer une equipe
+            </button>
+            <button
+                onClick={function () { setMode("join") }}
+                className={
+                mode === "join"
+                    ? "flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium"
+                    : "flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400"
+                }
+            >
+                Rejoindre une equipe
+            </button>
+            </div>
+
+            {mode === "create" ? (
+            <form onSubmit={handleCreateTeam} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Ton pseudo dans l'equipe</label>
+                <input
+                    value={createUsername}
+                    onChange={function (e) { setCreateUsername(e.target.value) }}
+                    autoComplete="off"
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
+                />
+                </div>
+                <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Nom de l'equipe</label>
+                <input
+                    value={teamName}
+                    onChange={function (e) { setTeamName(e.target.value) }}
+                    autoComplete="off"
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
+                />
+                </div>
+                <button type="submit" className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
+                Creer
                 </button>
-
-                {errorMsg && <p>{errorMsg}</p>}
-
+                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
             </form>
+            ) : null}
+
+            {mode === "join" && joinStep === "enterCode" ? (
+            <form onSubmit={handleSubmitJoinCode} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Code d'equipe</label>
+                <input
+                    value={joinCode}
+                    onChange={function (e) { setJoinCode(e.target.value) }}
+                    autoComplete="off"
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
+                />
+                </div>
+                <button type="submit" className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
+                Suivant
+                </button>
+                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+            </form>
+            ) : null}
+
+            {mode === "join" && joinStep === "claimChoice" ? (
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                Es-tu deja l'un de ces membres de {foundTeam.name} ?
+                </p>
+
+                {unclaimedRiders.map(function (rider) {
+                return (
+                    <button
+                    key={rider.id}
+                    onClick={function () { handleSelectExistingRider(rider) }}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm"
+                    >
+                    {rider.name}
+                    </button>
+                )
+                })}
+
+                <button
+                onClick={handleSelectNewMember}
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm text-gray-500 dark:text-gray-400 mt-1"
+                >
+                Aucun de ces membres, je suis nouveau
+                </button>
+            </div>
+            ) : null}
+
+            {mode === "join" && joinStep === "confirmClaim" ? (
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                <label className="text-sm text-gray-500 dark:text-gray-400">Ton pseudo dans l'equipe</label>
+                <input
+                value={finalUsername}
+                onChange={function (e) { setFinalUsername(e.target.value) }}
+                autoComplete="off"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2"
+                />
+                <button onClick={handleConfirmClaim} className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
+                Rejoindre
+                </button>
+                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+            </div>
+            ) : null}
+
+            {mode === "join" && joinStep === "newMemberUsername" ? (
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                <label className="text-sm text-gray-500 dark:text-gray-400">Ton pseudo dans l'equipe</label>
+                <input
+                value={finalUsername}
+                onChange={function (e) { setFinalUsername(e.target.value) }}
+                autoComplete="off"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2"
+                />
+                <button onClick={handleConfirmNewMember} className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
+                Rejoindre
+                </button>
+                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+            </div>
+            ) : null}
+
+        </div>
         </div>
     )
-
 }

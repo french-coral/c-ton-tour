@@ -22,7 +22,7 @@ export async function login(email, password) {
 
 
 // Insert a rider in a team
-export async function addRider(teamId, name, avatarUrl = null, profileId = null) {
+export async function addRider(teamId, name, profileId = null) {
     
         // You also record membership if a rider is linked to a real account
         if (profileId){
@@ -39,7 +39,6 @@ export async function addRider(teamId, name, avatarUrl = null, profileId = null)
             team_id: teamId,
             profile_id: profileId, // null = placeholder, an id = self or claimed
             name,
-            avatar_url: avatarUrl,
         })
 
     return { error }
@@ -48,7 +47,7 @@ export async function addRider(teamId, name, avatarUrl = null, profileId = null)
 
 
 // You must be a logged-in user to create OR join a team
-export async function createTeam(teamName, username, avatarUrl = null) {
+export async function createTeam(teamName, username) {
     const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase() // e.g. "K3F9XQ"
 
 
@@ -68,13 +67,13 @@ export async function createTeam(teamName, username, avatarUrl = null) {
     console.log('team:', team)
     console.log('userData.user:', userData.user)
 
-    const { error: riderError } = await addRider(team.id, username, avatarUrl, userData.user.id)
+    const { error: riderError } = await addRider(team.id, username, userData.user.id)
 
     return { error: riderError, team }
 }
 
 // Via the join code you can join and or create team_rider or claim one.
-export async function joinTeam(joinCode, username, avatarUrl = null) {
+export async function joinTeam(joinCode, username) {
 
     console.log(joinCode, username)
 
@@ -87,7 +86,7 @@ export async function joinTeam(joinCode, username, avatarUrl = null) {
     if (error) return { error: { message: 'Invalid join code' } }
    
     const { data: userData } = await supabase.auth.getUser()
-    const { error: riderError } = await addRider(team.id, username, avatarUrl, userData.user.id)
+    const { error: riderError } = await addRider(team.id, username, userData.user.id)
 
     return { error: riderError, team }
 }
@@ -122,4 +121,36 @@ export async function claimRider(teamRiderId) {
         .is('profile_id', null)
 
     return { error }
+}
+
+// On joining a team
+export async function getTeamByJoinCode(joinCode) {
+    const teamResult = await supabase
+        .from('teams')
+        .select('id, name')
+        .eq('join_code', joinCode)
+        .single()
+
+    return { team: teamResult.data, error: teamResult.error }
+}
+
+export async function getUnclaimedRiders(teamId) {
+    const ridersResult = await supabase
+        .from('team_riders')
+        .select('id, name')
+        .eq('team_id', teamId)
+        .eq('status', 'active')
+        .is('profile_id', null)
+
+    return { riders: ridersResult.data, error: ridersResult.error }
+}
+
+export async function getTeamJoinCode(teamId) {
+    const result = await supabase
+        .from('teams')
+        .select('join_code')
+        .eq('id', teamId)
+        .single()
+
+    return { joinCode: result.data ? result.data.join_code : null, error: result.error }
 }

@@ -23,6 +23,7 @@ import {
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import QueueItem from "@/components/QueueItem"
 
 
@@ -50,6 +51,7 @@ export default function MainPage() {
 	const [pastLaps, setPastLaps] = useState([])
 	const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
+	useLockBodyScroll(isQueueOpen || isAddLapOpen)
 
 ////////////////////////////////////////////////////////////
 ////	        Load needed data of the team		    ////
@@ -312,6 +314,7 @@ export default function MainPage() {
 		id: queueEntry.id,
 		riderId: queueEntry.team_rider.id,
 		riderName: queueEntry.team_rider.name,
+		riderAvatarUrl: queueEntry.team_rider.profile?.avatar_url,
 		lapCount: queueEntry.lap_count,
 		etaSeconds: etaForThisEntry,
 	})
@@ -522,8 +525,12 @@ export default function MainPage() {
 					<div className="flex items-center gap-3 mb-4">
 						{team.current_rider ? (
 						<>
-							<div className="w-[52px] h-[52px] rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center font-medium text-base flex-shrink-0">
-								{getInitials(team.current_rider.name)}
+							<div className="w-[52px] h-[52px] rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center font-medium text-base flex-shrink-0 overflow-hidden">
+								{team.current_rider.profile?.avatar_url ? (
+									<img src={team.current_rider.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+								) : (
+									getInitials(team.current_rider.name)
+								)}
 							</div>
 							<div className="flex-1">
 								<p className="font-medium text-lg">{team.current_rider.name}</p>
@@ -556,8 +563,12 @@ export default function MainPage() {
 				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 mb-3">
 					{nextEntry ? (
 						<div className="flex items-center gap-3">
-							<div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 flex items-center justify-center font-medium text-sm flex-shrink-0">
-								{getInitials(nextEntry.riderName)}
+							<div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center font-medium text-sm flex-shrink-0 overflow-hidden">
+								{nextEntry.riderAvatarUrl ? (
+									<img src={nextEntry.riderAvatarUrl} alt="" className="w-full h-full object-cover" />
+								) : (
+									getInitials(nextEntry.riderName)
+								)}
 							</div>
 						<div className="flex-1">
 							<p className="text-sm text-gray-500 dark:text-gray-400">Suivant</p>
@@ -619,6 +630,7 @@ export default function MainPage() {
 												entry={{
 													id: entry.id,
 													riderName: entry.riderName,
+													riderAvatarUrl: entry.riderAvatarUrl,
 													lapCount: entry.lapCount,
 													etaText: formatSeconds(entry.etaSeconds),
 												}}
@@ -799,8 +811,12 @@ export default function MainPage() {
 										key={lap.id}
 										className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 border-gray-100 dark:border-gray-800"
 									>
-										<div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center font-medium text-sm flex-shrink-0">
-											{getInitials(lap.team_rider.name)}
+										<div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center font-medium text-sm flex-shrink-0 overflow-hidden">
+											{lap.team_rider.profile?.avatar_url ? (
+												<img src={lap.team_rider.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+											) : (
+												getInitials(lap.team_rider.name)
+											)}
 										</div>
 
 										<p className="font-medium text-sm flex-1">{lap.team_rider.name}</p>

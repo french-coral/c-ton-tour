@@ -16,7 +16,7 @@ export default function SignUp(){
         const { error } = await signUp(email, password, userName)
 
         if (error) setErrorMsg(error.message)
-        else window.location.href = "/team-setup"
+        else window.location.href = "/profile-setup"
     }
     return (
         <form onSubmit={handleSubmit}>

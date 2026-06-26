@@ -4,7 +4,7 @@ import { supabase } from './supabase'
 export async function getTeamState(teamId) {
     const { data: team, error: teamError } = await supabase
         .from('teams')
-        .select('*, current_rider:current_rider_id(id, name, avatar_url)')
+        .select('*, current_rider:current_rider_id(id, name, profile:profile_id(avatar_url))')
         .eq('id', teamId)
         .single()
 
@@ -12,7 +12,7 @@ export async function getTeamState(teamId) {
 
     const { data: queue, error: queueError } = await supabase
         .from('run_queue')
-        .select('*, team_rider:team_rider_id(id, name, avatar_url)')
+        .select('*, team_rider:team_rider_id(id, name, profile:profile_id(avatar_url))')
         .eq('team_id', teamId)
         .order('position', { ascending: true })
 
@@ -423,7 +423,7 @@ export async function getPastLaps(teamId, howMany = 400) {
   // the joined team_rider's team_id, not just attach it for display
   const lapsResult = await supabase
     .from('laps')
-    .select('id, lap_count, time_seconds, created_at, team_rider:team_rider_id!inner(id, name, avatar_url, team_id)')
+    .select('id, lap_count, time_seconds, created_at, team_rider:team_rider_id!inner(id, name, profile:profile_id(avatar_url), team_id)')
     .eq('team_rider.team_id', teamId)
     .order('created_at', { ascending: false })
     .limit(howMany)
@@ -446,7 +446,7 @@ export async function getTeamName(teamId) {
 export async function getTeamRiders(teamId) {
   const result = await supabase
     .from('team_riders')
-    .select('id, name, avatar_url, status')
+    .select('id, name, profile:profile_id(avatar_url), status')
     .eq('team_id', teamId)
     .order('name', { ascending: true })
 
