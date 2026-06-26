@@ -1,7 +1,13 @@
 "use client"
 
+
+////////////////////////////////////////////////////////////
+////	        Import functions and const 			    ////
+///////////////////////////////////////////////////////////
+
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { getPastLaps } from "@/lib/queue"
 import {
   getTeamState,
   getAverageLapTimesForRiders,
@@ -11,6 +17,8 @@ import {
   removeFromQueue,
   updateQueueEntryLapCount,
   addToQueue,
+  updateCurrentRider,
+  updateCurrentLegLapCount,
 } from "@/lib/queue"
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
@@ -35,6 +43,13 @@ export default function MainPage() {
 	const [riderToAdd, setRiderToAdd] = useState("")
 	const [lapCountToAdd, setLapCountToAdd] = useState(1)
 
+	const [isEditingCurrentRider, setIsEditingCurrentRider] = useState(false)
+	const [editedRiderId, setEditedRiderId] = useState("")
+	const [editedLapCount, setEditedLapCount] = useState(1)
+
+	const [pastLaps, setPastLaps] = useState([])
+	const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
 
 ////////////////////////////////////////////////////////////
 ////	        Load needed data of the team		    ////
@@ -44,56 +59,19 @@ export default function MainPage() {
 	// Load the team's current state once when the page opens
 	useEffect(() => {
 		async function loadData() {
-			// For now hardcoded a team id, this will come from the logged in user later
-			const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
-
-			// Team state (queue and overall team)
-			const stateResult = await getTeamState(teamId)
-
-			if (stateResult.error) {
-				console.error(stateResult.error)
-				return
-			}
-
-			setTeam(stateResult.team)
-			setQueue(stateResult.queue)
-
-			// Gather every rider id we will need an average for:
-			// the current runner, plus everyone in the queue
-			const riderIds = []
-
-			if (stateResult.team.current_rider) {
-				riderIds.push(stateResult.team.current_rider.id)
-			}
-
-			for (const queueEntry of stateResult.queue) {
-				riderIds.push(queueEntry.team_rider.id)
-			}
-
-
-			if (riderIds.length > 0) {
-				const averagesResult = await getAverageLapTimesForRiders(riderIds)
-				if (!averagesResult.error) {
-					setAveragesByRiderId(averagesResult.averages)
-				}
-			}
-
-			// Active riders
-			const ridersResult = await getActiveRiders(teamId)
-
-			if (!ridersResult.error) {
-				setActiveRiders(ridersResult.riders)
-			}
-			
+			// Initial loading
+			reloadEverything()
 		}
-
 		loadData()
 	}, [])
 
-
+	// Reload all for realtime updates
 	async function reloadEverything() {
+
+		// For now hardcoded a team id, this will come from the logged in user later
 		const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
 
+		// Team state (queue and overall team)
 		const stateResult = await getTeamState(teamId)
 
 		if (stateResult.error) {
@@ -104,23 +82,41 @@ export default function MainPage() {
 		setTeam(stateResult.team)
 		setQueue(stateResult.queue)
 
+		// Gather every rider id we will need an average for:
+		// the current runner, plus everyone in the queue
 		const riderIds = []
 
 		if (stateResult.team.current_rider) {
 			riderIds.push(stateResult.team.current_rider.id)
 		}
 
+		// Get queue riders
 		for (const queueEntry of stateResult.queue) {
 			riderIds.push(queueEntry.team_rider.id)
 		}
 
+		// Average to calculate wait time in queue
 		if (riderIds.length > 0) {
 			const averagesResult = await getAverageLapTimesForRiders(riderIds)
 			if (!averagesResult.error) {
 			setAveragesByRiderId(averagesResult.averages)
 			}
 		}
+
+		// Active riders (only queue active one)
+		const ridersResult = await getActiveRiders(teamId)
+
+		if (!ridersResult.error) {
+			setActiveRiders(ridersResult.riders)
+		}
+
+		// Previous lap list
+		const pastLapsResult = await getPastLaps(teamId)
+		if (!pastLapsResult.error) {
+			setPastLaps(pastLapsResult.laps)
+		}
 	}
+
 
 ////////////////////////////////////////////////////////////
 ////	     	   Update every second				    ////
@@ -180,6 +176,20 @@ export default function MainPage() {
 			}
 			)
 
+			// Listen for any change on the laps table, for this specific team
+			.on(
+			'postgres_changes',
+			{
+				event: '*',
+				schema: 'public',
+				table: 'laps',
+				filter: 'id=eq.' + teamId,
+			},
+			function () {
+				reloadEverything()
+			}
+			)
+
 			// Actually start listening
 			.subscribe()
 
@@ -192,6 +202,7 @@ export default function MainPage() {
 	if (!team) {
 		return <p className="text-center mt-10 text-gray-500">Chargement...</p>
 	}
+
 
 ////////////////////////////////////////////////////////////
 ////	      		  Tools formatting			 	   ////
@@ -242,6 +253,21 @@ export default function MainPage() {
 
 		return year + "-" + month + "-" + day + "T" + hours + ":" + minutes + ":" + seconds
 		}
+
+	// Helper : Format pace from seconds and a lap amount
+	function formatPace(timeSeconds, lapCount) {
+		const paceSeconds = timeSeconds / lapCount
+		return formatSeconds(paceSeconds)
+	}
+
+	// A small helper: returns "tour" or "tours" depending on the count
+	function pluralizeTour(count) {
+	if (count === 1) {
+		return "tour"
+	} else {
+		return "tours"
+	}
+	}
 
 
 ////////////////////////////////////////////////////////////
@@ -385,9 +411,11 @@ export default function MainPage() {
 		await reorderQueue(orderedIds)
 	}
 
+
 /////////////////////////////////////////////////////////////
 ////	    	   	Queue Entries Editing				////
 ///////////////////////////////////////////////////////////
+
 
 	async function handleDeleteQueueEntry(queueEntryId) {
 		await removeFromQueue(queueEntryId)
@@ -413,6 +441,27 @@ export default function MainPage() {
 		reloadEverything()
 	}
 
+
+	
+	// Edit current runner id or lap count
+	function openEditCurrentRider() {
+		if (team.current_rider) {
+			setEditedRiderId(team.current_rider.id)
+		}
+
+		setEditedLapCount(team.current_leg_lap_count)
+		setIsEditingCurrentRider(true)
+	}
+
+
+	async function handleSaveCurrentRiderEdit() {
+		await updateCurrentRider(team.id, editedRiderId)
+		await updateCurrentLegLapCount(team.id, editedLapCount)
+
+		setIsEditingCurrentRider(false)
+		reloadEverything()
+	}
+
 ////////////////////////////////////////////////////////////
 ////	     		   Page Content					    ////
 ///////////////////////////////////////////////////////////
@@ -427,31 +476,80 @@ export default function MainPage() {
 				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-3">
 					<p className="text-sm text-gray-500 dark:text-gray-400 mb-3">En course</p>
 
-					{team.current_rider ? (
-						<div className="flex items-center gap-3 mb-4">
-							<div className="w-13 h-13 w-[52px] h-[52px] rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center font-medium text-base flex-shrink-0">
+					{isEditingCurrentRider ? (
+					<div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex flex-col gap-2 mb-4">
+
+						<select
+							value={editedRiderId}
+							onChange={function (e) { setEditedRiderId(e.target.value) }}
+							className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm">
+
+							{activeRiders.map(function (rider) {
+								return (
+									<option key={rider.id} value={rider.id}>
+										{rider.name}
+									</option>
+								)
+							})}
+						</select>
+
+						<input
+							type="number"
+							min="1"
+							value={editedLapCount}
+							onChange={function (e) { setEditedLapCount(Number(e.target.value)) }}
+							className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm"/>
+
+						<div className="flex gap-2">
+							<button
+								onClick={function () { setIsEditingCurrentRider(false) }}
+								className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm">
+
+								Annuler
+
+							</button>
+							<button
+								onClick={handleSaveCurrentRiderEdit}
+								className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm">
+
+								Valider
+
+							</button>
+						</div>
+
+					</div>
+					) : (
+					<div className="flex items-center gap-3 mb-4">
+						{team.current_rider ? (
+						<>
+							<div className="w-[52px] h-[52px] rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center font-medium text-base flex-shrink-0">
 								{getInitials(team.current_rider.name)}
 							</div>
-							<div>
+							<div className="flex-1">
 								<p className="font-medium text-lg">{team.current_rider.name}</p>
 								<p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-								{team.current_leg_lap_count} tours prevus
+									{team.current_leg_lap_count} {pluralizeTour(team.current_leg_lap_count)} {team.current_leg_lap_count === 1 ? "prévu" : "prévus"}
 								</p>
 							</div>
-						</div>
-					) : (
-						<p className="text-gray-500 dark:text-gray-400 mb-4">Personne ne court actuellement</p>
+						</>
+						) : (
+						<p className="text-gray-500 dark:text-gray-400 flex-1">Personne ne court actuellement</p>
+						)}
+
+						<button
+							onClick={openEditCurrentRider}
+							aria-label="Modifier le coureur actuel"
+							className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-1">
+
+						✎
+
+						</button>
+					</div>
 					)}
 
 					<div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-						<span className="text-sm text-gray-500 dark:text-gray-400">Temps ecoule</span>
-						{isOverdue ? (
-							<span className="blink-orange text-red-600 dark:text-orange-400 text-xl font-medium ml-auto">
-							Relai
-							</span>
-						) : (
-							<span className="text-xl font-medium ml-auto">{formatSeconds(elapsedSeconds)}</span>
-						)}
+						<span className="text-sm text-gray-500 dark:text-gray-400">Temps écoulé</span>
+						<span className="text-xl font-medium ml-auto">{formatSeconds(elapsedSeconds)}</span>
 					</div>
 				</div>
 
@@ -467,7 +565,14 @@ export default function MainPage() {
 						</div>
 						<div className="text-right">
 							<p className="text-sm text-gray-500 dark:text-gray-400">Dans</p>
-							<p className="font-medium text-sm mt-0.5">~ {formatSeconds(nextEntry.etaSeconds)}</p>
+
+							{isOverdue ? (
+								<span className="blink-orange text-red-600 dark:text-orange-400 text-xl font-medium ml-auto">
+									Relai
+								</span>
+							) : (
+								<p className="font-medium text-sm mt-0.5">~ {formatSeconds(nextEntry.etaSeconds)}</p>
+						)}
 						</div>
 						</div>
 					) : (
@@ -501,7 +606,31 @@ export default function MainPage() {
 									</button>
 							</div>
 
-							<div className="mb-4">
+							<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+								<SortableContext
+									items={queueWithEtas.map(function (entry) { return entry.id })}
+									strategy={verticalListSortingStrategy}
+								>
+									<div className="flex flex-col gap-2">
+									{queueWithEtas.map(function (entry) {
+										return (
+											<QueueItem
+												key={entry.id}
+												entry={{
+													id: entry.id,
+													riderName: entry.riderName,
+													lapCount: entry.lapCount,
+													etaText: formatSeconds(entry.etaSeconds),
+												}}
+												onDelete={handleDeleteQueueEntry}
+												onChangeLapCount={handleChangeQueueLapCount}
+											/>
+										)
+									})}
+									</div>
+								</SortableContext>
+							</DndContext>
+							<div className="mt-5 mb-4">
 								{isAddingToQueue ? (
 									<div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex flex-col gap-2">
 
@@ -556,32 +685,7 @@ export default function MainPage() {
 
 									</button>
 								)}
-								</div>
-
-							<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-								<SortableContext
-									items={queueWithEtas.map(function (entry) { return entry.id })}
-									strategy={verticalListSortingStrategy}
-								>
-									<div className="flex flex-col gap-2">
-									{queueWithEtas.map(function (entry) {
-										return (
-											<QueueItem
-												key={entry.id}
-												entry={{
-													id: entry.id,
-													riderName: entry.riderName,
-													lapCount: entry.lapCount,
-													etaText: formatSeconds(entry.etaSeconds),
-												}}
-												onDelete={handleDeleteQueueEntry}
-												onChangeLapCount={handleChangeQueueLapCount}
-											/>
-										)
-									})}
-									</div>
-								</SortableContext>
-							</DndContext>
+							</div>
 					</div>
 				</div>
 				) : null}
@@ -667,6 +771,57 @@ export default function MainPage() {
 					</div>
 				</div>
 				) : null}
+
+				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 mt-4">
+
+					<button
+						onClick={function () { setIsHistoryOpen(!isHistoryOpen) }}
+						className="w-full flex items-center justify-between px-4 py-4 text-left font-medium text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+
+						<span>Historique</span>
+						<span className={`text-xs transform transition-transform duration-200 ${isHistoryOpen ? 'rotate-180' : ''}`}>
+							▼
+						</span>
+					</button>
+					<div 
+						className={`transition-all duration-300 ease-in-out flex flex-col overflow-y-auto ${
+							isHistoryOpen ? 'max-h-[350px] opacity-100 border-t border-gray-100 dark:border-gray-800' : 'max-h-0 opacity-0'
+						}`}
+					>
+					{pastLaps.length === 0 ? (
+								<p className="text-gray-400 dark:text-gray-500 text-sm text-center py-6">
+									Aucun tour enregistré
+								</p>
+						) : (
+							pastLaps.map(function (lap) {
+								return (
+									<div
+										key={lap.id}
+										className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 border-gray-100 dark:border-gray-800"
+									>
+										<div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center font-medium text-sm flex-shrink-0">
+											{getInitials(lap.team_rider.name)}
+										</div>
+
+										<p className="font-medium text-sm flex-1">{lap.team_rider.name}</p>
+
+										<div className="text-center px-3 border-l border-r border-gray-100 dark:border-gray-800">
+											<p className="text-base font-medium">{lap.lap_count}</p>
+											<p className="text-[10px] text-gray-500 dark:text-gray-400">{pluralizeTour(lap.lap_count)}</p>
+										</div>
+
+										<div className="text-right pl-1">
+											<p className="text-sm font-medium">{formatSeconds(lap.time_seconds)}</p>
+											<p className="text-xs text-gray-500 dark:text-gray-400">
+												{formatPace(lap.time_seconds, lap.lap_count)} / tour
+											</p>
+										</div>
+									</div>
+							)})
+						)
+					}
+					</div>
+				</div>
 			</div>
 		</div>
 	)

@@ -414,3 +414,19 @@ export async function updateQueueEntryLapCount(queueEntryId, newLapCount) {
 
   return { error: updateResult.error }
 }
+
+
+export async function getPastLaps(teamId, howMany = 400) {
+
+  // We need laps that belong to riders on this specific team.
+  // The "!inner" here tells Supabase to actually filter using
+  // the joined team_rider's team_id, not just attach it for display
+  const lapsResult = await supabase
+    .from('laps')
+    .select('id, lap_count, time_seconds, created_at, team_rider:team_rider_id!inner(id, name, avatar_url, team_id)')
+    .eq('team_rider.team_id', teamId)
+    .order('created_at', { ascending: false })
+    .limit(howMany)
+
+  return { laps: lapsResult.data, error: lapsResult.error }
+}
