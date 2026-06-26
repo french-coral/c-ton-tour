@@ -430,3 +430,83 @@ export async function getPastLaps(teamId, howMany = 400) {
 
   return { laps: lapsResult.data, error: lapsResult.error }
 }
+
+// Get the team's name, used for the page title
+export async function getTeamName(teamId) {
+  const result = await supabase
+    .from('teams')
+    .select('name')
+    .eq('id', teamId)
+    .single()
+
+  return { name: result.data ? result.data.name : null, error: result.error }
+}
+
+// Get every rider on a team, for the team list page
+export async function getTeamRiders(teamId) {
+  const result = await supabase
+    .from('team_riders')
+    .select('id, name, avatar_url, status')
+    .eq('team_id', teamId)
+    .order('name', { ascending: true })
+
+  return { riders: result.data, error: result.error }
+}
+
+// Get full stats for one specific rider, used in the detail popup
+export async function getRiderStats(teamRiderId) {
+  const result = await supabase
+    .from('laps')
+    .select('id, lap_count, time_seconds, created_at')
+    .eq('team_rider_id', teamRiderId)
+    .order('created_at', { ascending: true })
+
+  if (result.error) {
+    return { stats: null, error: result.error }
+  }
+
+  const laps = result.data
+
+  if (laps.length === 0) {
+    return {
+      stats: {
+        laps: [],
+        averagePace: null,
+        totalLaps: 0,
+        lastLapTime: null,
+        chartData: [],
+      },
+      error: null,
+    }
+  }
+
+  let totalTime = 0
+  let totalLaps = 0
+  const chartData = []
+
+  for (const lap of laps) {
+    totalTime = totalTime + lap.time_seconds
+    totalLaps = totalLaps + lap.lap_count
+
+    const paceForThisLap = lap.time_seconds / lap.lap_count
+
+    chartData.push({
+      date: lap.created_at,
+      pace: paceForThisLap,
+    })
+  }
+
+  const averagePace = totalTime / totalLaps
+  const mostRecentLap = laps[laps.length - 1]
+
+  return {
+    stats: {
+      laps: laps.slice().reverse(),
+      averagePace: averagePace,
+      totalLaps: totalLaps,
+      lastLapTime: mostRecentLap.time_seconds,
+      chartData: chartData,
+    },
+    error: null,
+  }
+}
