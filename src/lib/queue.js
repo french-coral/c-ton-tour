@@ -185,8 +185,48 @@ export async function replenishQueueIfNeeded(teamId) {
         return { error: null }
     }
 
-    // Figure out the next available position number
-    const lastPositionResult = await supabase
+    const riderIds = activeRiders.map(function (rider) {
+        return rider.id
+    })
+
+    const lastRanResult = await getLastRanTimes(teamId, riderIds)
+
+    if (lastRanResult.error) {
+        return { error: lastRanResult.error }
+    }
+
+    const lastRanTimes = lastRanResult.lastRanTimes
+
+    // Sort riders so whoever ran longest ago comes first.
+    // A rider who never ran (lastRanTimes is null) should come before
+    // everyone who has a real timestamp.
+    const sortedRiders = riderIds.slice()
+
+    sortedRiders.sort(function (riderIdA, riderIdB) {
+        const timeA = lastRanTimes[riderIdA]
+        const timeB = lastRanTimes[riderIdB]
+
+        if (!timeA && !timeB) {
+            return 0
+        }
+        if (!timeA) {
+            return -1
+        }
+        if (!timeB) {
+            return 1
+        }
+
+        if (timeA < timeB) {
+            return -1
+        }
+        if (timeA > timeB) {
+            return 1
+        }
+            return 0
+    })
+
+
+      const lastPositionResult = await supabase
         .from('run_queue')
         .select('position')
         .eq('team_id', teamId)
@@ -199,25 +239,21 @@ export async function replenishQueueIfNeeded(teamId) {
         nextPosition = lastPositionResult.data.position + 1
     }
 
-    // How many new rows do we need to insert?
     const howManyToAdd = targetLength - currentLength
-
-    // Build the new rows, cycling through activeRiders as needed
     const newRows = []
 
     for (let i = 0; i < howManyToAdd; i++) {
-        const riderIndex = i % activeRiders.length
-        const rider = activeRiders[riderIndex]
+        const riderIndex = i % sortedRiders.length
+        const riderId = sortedRiders[riderIndex]
 
         newRows.push({
-        team_id: teamId,
-        team_rider_id: rider.id,
-        lap_count: 1,
-        position: nextPosition + i,
+            team_id: teamId,
+            team_rider_id: riderId,
+            lap_count: 1,
+            position: nextPosition + i,
         })
     }
 
-    // Insert these new rows into run_queue
     const insertResult = await supabase
         .from('run_queue')
         .insert(newRows)
@@ -446,7 +482,7 @@ export async function getTeamName(teamId) {
 export async function getTeamRiders(teamId) {
   const result = await supabase
     .from('team_riders')
-    .select('id, name, profile:profile_id(avatar_url), status')
+    .select('id, name, status, default_order profile:profile_id(avatar_url), status')
     .eq('team_id', teamId)
     .order('name', { ascending: true })
 
@@ -509,4 +545,91 @@ export async function getRiderStats(teamRiderId) {
     },
     error: null,
   }
+}
+
+// Update a rider priority_order
+export async function updateRiderStatus(teamRiderId, newStatus) {
+    const updateResult = await supabase
+        .from('team_riders')
+        .update({ status: newStatus })
+        .eq('id', teamRiderId)
+
+    return { error: updateResult.error }
+}
+
+export async function updateRiderPriority(teamRiderId, newPriority) {
+    const updateResult = await supabase
+        .from('team_riders')
+        .update({ default_order: newPriority })
+        .eq('id', teamRiderId)
+
+    return { error: updateResult.error }
+}
+
+// Autofill queue
+export async function setAutoFill(teamId, isOn) {
+    const updateResult = await supabase
+        .from('teams')
+        .update({ auto_fill: isOn })
+        .eq('id', teamId)
+
+    return { error: updateResult.error }
+}
+
+
+// Get last ran time to compose autofilling queue
+async function getLastRanTimes(teamId, riderIds) {
+
+    // Get every lap for these riders
+    const lapsResult = await supabase
+        .from('laps')
+        .select('team_rider_id, created_at')
+        .in('team_rider_id', riderIds)
+
+    if (lapsResult.error) {
+        return { lastRanTimes: null, error: lapsResult.error }
+    }
+
+    const allLaps = lapsResult.data
+
+    // For each rider, find their most recent lap's timestamp
+    // build a plain object: riderId -> most recent timestamp (or null)
+    const lastRanTimes = {}
+
+    for (const riderId of riderIds) {
+        lastRanTimes[riderId] = null
+    }
+
+    for (const lap of allLaps) {
+        const currentLatest = lastRanTimes[lap.team_rider_id]
+
+        if (!currentLatest || lap.created_at > currentLatest) {
+        lastRanTimes[lap.team_rider_id] = lap.created_at
+        }
+    }
+
+    // If someone is currently running, their leg's start time
+    // counts as more recent than any past completed lap
+    const teamResult = await supabase
+        .from('teams')
+        .select('current_rider_id, current_leg_started_at')
+        .eq('id', teamId)
+        .single()
+
+    if (teamResult.error) {
+        return { lastRanTimes: null, error: teamResult.error }
+    }
+
+    const currentRiderId = teamResult.data.current_rider_id
+    const currentLegStartedAt = teamResult.data.current_leg_started_at
+
+    if (currentRiderId && currentLegStartedAt) {
+        const existingValue = lastRanTimes[currentRiderId]
+
+        if (!existingValue || currentLegStartedAt > existingValue) {
+            lastRanTimes[currentRiderId] = currentLegStartedAt
+        }
+    }
+
+    return { lastRanTimes, error: null }
 }

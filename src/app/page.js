@@ -7,7 +7,6 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
-import { getPastLaps } from "@/lib/queue"
 import {
   getTeamState,
   getAverageLapTimesForRiders,
@@ -19,6 +18,11 @@ import {
   addToQueue,
   updateCurrentRider,
   updateCurrentLegLapCount,
+  updateRiderStatus, 
+  updateRiderPriority,
+  getPastLaps,
+  setAutoFill,
+  replenishQueueIfNeeded
 } from "@/lib/queue"
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
@@ -53,6 +57,8 @@ export default function MainPage() {
 
 	useLockBodyScroll(isQueueOpen || isAddLapOpen)
 
+	const TEAM_ID_NUMBER = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+
 ////////////////////////////////////////////////////////////
 ////	        Load needed data of the team		    ////
 ///////////////////////////////////////////////////////////
@@ -71,7 +77,7 @@ export default function MainPage() {
 	async function reloadEverything() {
 
 		// For now hardcoded a team id, this will come from the logged in user later
-		const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+		const teamId = TEAM_ID_NUMBER
 
 		// Team state (queue and overall team)
 		const stateResult = await getTeamState(teamId)
@@ -144,7 +150,7 @@ export default function MainPage() {
 
 
 	useEffect(function () {
-		const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+		const teamId = TEAM_ID_NUMBER
 
 		// Create a "channel" - this is just a named subscription
 		const channel = supabase
@@ -465,6 +471,18 @@ export default function MainPage() {
 		reloadEverything()
 	}
 
+	async function handleToggleAutoFill() {
+		const newValue = !team.auto_fill
+		await setAutoFill(team.id, newValue)
+
+		if (newValue) {
+			replenishQueueIfNeeded(team.id)
+		}
+		
+		reloadEverything()
+	}
+
+
 ////////////////////////////////////////////////////////////
 ////	     		   Page Content					    ////
 ///////////////////////////////////////////////////////////
@@ -670,7 +688,21 @@ export default function MainPage() {
 									</div>
 								</SortableContext>
 							</DndContext>
+
 {/* Add rider popup window */}
+							<div className="flex items-center justify-between mb-3 mt-5 px-1">
+								<p className="text-sm text-gray-500 dark:text-gray-400">Remplissage automatique</p>
+								<button
+									onClick={handleToggleAutoFill}
+									className={
+									team.auto_fill
+										? "w-11 h-6 rounded-full bg-blue-600 flex items-center px-1 justify-end"
+										: "w-11 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center px-1 justify-start"
+									}
+								>
+									<div className="w-4 h-4 rounded-full bg-white"></div>
+								</button>
+							</div>
 							<div className="mt-5 mb-4">
 								{isAddingToQueue ? (
 									<div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex flex-col gap-2">

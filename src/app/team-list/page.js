@@ -1,7 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getTeamName, getTeamRiders, getRiderStats } from "@/lib/queue"
+import { 
+    getTeamName, 
+    getTeamRiders, 
+    getRiderStats,  
+    updateRiderStatus, 
+    updateRiderPriority 
+} from "@/lib/queue"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
 import {
@@ -22,14 +28,22 @@ export default function TeamPage() {
 
     useLockBodyScroll(selectedRider !== null)
 
-    // used to mannually add a member
+    const TEAM_ID_NUMBER = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+
+
+/////////////////////////////////////////////////////////////
+////	    	   Handle member in and out		    	////
+///////////////////////////////////////////////////////////
+    
+
+// used to mannually add a member
     function openAddMemberPopup() {
         setAddMemberStep("choose")
         setIsAddMemberOpen(true)
     }
 
     async function handleShowInviteCode() {
-        const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+        const teamId = TEAM_ID_NUMBER
         const result = await getTeamJoinCode(teamId)
         if (!result.error) {
             setTeamJoinCode(result.joinCode)
@@ -42,7 +56,7 @@ export default function TeamPage() {
             return
         }
 
-        const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+        const teamId = TEAM_ID_NUMBER
         await addPlaceholderRider(teamId, newMemberName)
 
         setNewMemberName("")
@@ -54,9 +68,15 @@ export default function TeamPage() {
         }
     }
 
+
+/////////////////////////////////////////////////////////////
+////	    	  Load base needed datas				////
+///////////////////////////////////////////////////////////
+
+
     useEffect(function () {
         async function loadData() {
-        const teamId = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+        const teamId = TEAM_ID_NUMBER
 
         const nameResult = await getTeamName(teamId)
         if (!nameResult.error) {
@@ -72,12 +92,32 @@ export default function TeamPage() {
         loadData()
     }, [])
 
+/////////////////////////////////////////////////////////////
+////	    	           	Tools       				////
+///////////////////////////////////////////////////////////
+
     function getInitials(name) {
         const parts = name.trim().split(" ")
         const firstInitial = parts[0] ? parts[0][0] : ""
         const secondInitial = parts[1] ? parts[1][0] : ""
         return (firstInitial + secondInitial).toUpperCase()
     }
+
+    function getStatusBadge(status) {
+        if (status === "active") {
+            return { label: "A", bg: "bg-green-100 dark:bg-green-900", text: "text-green-700 dark:text-green-300" }
+        } else if (status === "inactive") {
+            return { label: "R", bg: "bg-orange-100 dark:bg-orange-900", text: "text-orange-700 dark:text-orange-300" }
+        } else {
+            return { label: "I", bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-500 dark:text-gray-300" }
+        }
+    }
+
+
+/////////////////////////////////////////////////////////////
+////	    	   	Handle rider windows				////
+///////////////////////////////////////////////////////////
+
 
     async function handleOpenRider(rider) {
         setSelectedRider(rider)
@@ -92,6 +132,33 @@ export default function TeamPage() {
         setSelectedRider(null)
         setSelectedRiderStats(null)
     }
+
+
+/////////////////////////////////////////////////////////////
+////	    	   	Handle rider windows				////
+///////////////////////////////////////////////////////////
+
+
+    async function handleStatusChange(riderId, newStatus) {
+		await updateRiderStatus(riderId, newStatus)
+
+		const teamId = TEAM_ID_NUMBER
+		const ridersResult = await getTeamRiders(teamId)
+		if (!ridersResult.error) {
+			setRiders(ridersResult.riders)
+		}
+	}
+
+	async function handlePriorityChange(riderId, newPriority) {
+		await updateRiderPriority(riderId, newPriority)
+
+		const teamId = TEAM_ID_NUMBER
+		const ridersResult = await getTeamRiders(teamId)
+		if (!ridersResult.error) {
+			setRiders(ridersResult.riders)
+		}
+	}
+
 
     return (
         <div className="min-h-screen p-5 relative">
@@ -225,11 +292,17 @@ export default function TeamPage() {
                     </div>
 
                     <p className="font-medium text-sm flex-1">{rider.name}</p>
-                    {rider.status !== "active" ? (
+
+                    <div className={"w-7 h-7 rounded-lg flex items-center justify-center text-sm font-medium " + getStatusBadge(rider.status).bg + " " + getStatusBadge(rider.status).text}>
+                        {getStatusBadge(rider.status).label}
+                    </div>
+
+                    {/*{rider.status !== "active" ? (
                     <span className="text-xs text-gray-400 dark:text-gray-500">
                         {rider.status === "left" ? "Parti" : "Inactif"}
                     </span>
-                    ) : null}
+                    ) : null}*/}
+
                 </button>
                 )
             })}
@@ -240,6 +313,9 @@ export default function TeamPage() {
                 rider={selectedRider}
                 stats={selectedRiderStats}
                 onClose={handleClosePopup}
+                onStatusChange={handleStatusChange}
+                onPriorityChange={handlePriorityChange}
+                
             />
             ) : null}
         </div>
