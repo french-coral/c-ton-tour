@@ -97,7 +97,20 @@ export default function TeamPage() {
         <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5">
         <div className="max-w-sm mx-auto">
 
-            <h1 className="text-center text-xl font-medium mb-4">{teamName}</h1>
+{/* Logo and team name */}
+            <div className="flex justify-center">
+                <div className="relative w-50 h-24 flex items-center justify-center">
+                        <div className="bg-white/80 dark:bg-gray-900/80 z-10 rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-2">
+                            <h1 className="relative z-10 text-center text-xl font-medium">{teamName}</h1>
+                        </div>
+                        <img 
+                            src="https://static.wixstatic.com/media/ca73d0_c6b9929de46744dd843625f3b2f98196~mv2.png/v1/fill/w_212,h_84,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Ruban%20BD.png"
+                            className="absolute left-1/2 -translate-x-4 z-0 max-h-full object-contain opacity-80" 
+                            alt="Background Ribbon"
+                        />
+                </div>
+            </div>
+{/* Add a member */}            
             <button
                 onClick={openAddMemberPopup}
                 className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm mb-3">
@@ -140,12 +153,12 @@ export default function TeamPage() {
                             onClick={function () { setAddMemberStep("create") }}
                             className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm">
 
-                            Creer un membre
+                            Créer un membre
 
                         </button>
                         </div>
                     ) : null}
-
+{/* Invite window /w invite code */}
                     {addMemberStep === "invite" ? (
                         <div className="text-center">
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
@@ -154,7 +167,7 @@ export default function TeamPage() {
                         <p className="text-3xl font-medium tracking-widest">{teamJoinCode}</p>
                         </div>
                     ) : null}
-
+{/* Add placeholder member, not linked to an account */}
                     {addMemberStep === "create" ? (
                         <div className="flex flex-col gap-3">
                         <input

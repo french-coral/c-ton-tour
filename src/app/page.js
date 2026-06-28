@@ -474,11 +474,26 @@ export default function MainPage() {
 		<div className="bg-gray-100 dark:bg-gray-800 min-h-screen p-5">
 			<div className="max-w-sm mx-auto">
 
-				<h1 className="text-center text-xl font-medium mb-4">{team.name}</h1>
+{/* Logo and team name */}
+				<div className="flex justify-center mb-9">
+                    <div className="relative w-50 h-24 flex items-center justify-center">
+							<div className="bg-white/80 dark:bg-gray-900/80 z-10 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4">
+								<h1 className="relative z-10 text-center text-xl font-medium">{team.name}</h1>
+							</div>
+                            <img 
+                                src="https://static.wixstatic.com/media/ca73d0_c6b9929de46744dd843625f3b2f98196~mv2.png/v1/fill/w_212,h_84,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Ruban%20BD.png"
+                                className="absolute left-1/2 -translate-x-4 z-0 max-h-full object-contain opacity-80" 
+                                alt="Background Ribbon"
+                            />
+                    </div>
+                </div>
 
-				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-3">
+
+{/* Current running rider */}
+				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-8">
 					<p className="text-sm text-gray-500 dark:text-gray-400 mb-3">En course</p>
 
+{/* Current runner editor */}
 					{isEditingCurrentRider ? (
 					<div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex flex-col gap-2 mb-4">
 
@@ -553,14 +568,14 @@ export default function MainPage() {
 						</button>
 					</div>
 					)}
-
+{/* Elapsed time of current rider */}
 					<div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
 						<span className="text-sm text-gray-500 dark:text-gray-400">Temps écoulé</span>
 						<span className="text-xl font-medium ml-auto">{formatSeconds(elapsedSeconds)}</span>
 					</div>
 				</div>
-
-				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 mb-3">
+{/* Next rider in line*/}
+				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 mb-8">
 					{nextEntry ? (
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center font-medium text-sm flex-shrink-0 overflow-hidden">
@@ -576,7 +591,7 @@ export default function MainPage() {
 						</div>
 						<div className="text-right">
 							<p className="text-sm text-gray-500 dark:text-gray-400">Dans</p>
-
+{/* Relay blinking text */}
 							{isOverdue ? (
 								<span className="blink-orange text-red-600 dark:text-orange-400 text-xl font-medium ml-auto">
 									Relai
@@ -590,7 +605,7 @@ export default function MainPage() {
 						<p className="text-gray-500 dark:text-gray-400">La file d'attente est vide</p>
 					)}
 				</div>
-
+{/* Queue popup window */}
 				<button
 					onClick={function () { setIsQueueOpen(true) }}
 					className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 dark:border-gray-800 rounded-xl py-3 font-medium text-sm hover:bg-gray-50">
@@ -616,7 +631,7 @@ export default function MainPage() {
 									✕
 									</button>
 							</div>
-
+{/* Draggable element space */}
 							<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
 								<SortableContext
 									items={queueWithEtas.map(function (entry) { return entry.id })}
@@ -642,6 +657,7 @@ export default function MainPage() {
 									</div>
 								</SortableContext>
 							</DndContext>
+{/* Add rider popup window */}
 							<div className="mt-5 mb-4">
 								{isAddingToQueue ? (
 									<div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex flex-col gap-2">
@@ -707,7 +723,7 @@ export default function MainPage() {
 				className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2">
 				Ajouter un temps
 				</button>
-
+{/* Add laps of a given rider popup window*/}
 				{isAddLapOpen ? (
 				<div 
 					className="fixed inset-0 bg-black/40 flex items-center justify-center p-5"
@@ -783,7 +799,7 @@ export default function MainPage() {
 					</div>
 				</div>
 				) : null}
-
+{/* Team laps history acordeon*/}
 				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 mt-4">
 
 					<button
