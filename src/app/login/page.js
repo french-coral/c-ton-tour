@@ -34,7 +34,8 @@ export default function Login() {
     }
 
     return (
-        <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5 flex flex-col items-center justify-center">
+        <div className="min-h-screen p-5 flex flex-col items-center justify-center">
+        <div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]"/>
             <div className="max-w-sm w-full">
 
                 <div className="flex justify-center mb-9">

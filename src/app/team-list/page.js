@@ -94,18 +94,32 @@ export default function TeamPage() {
     }
 
     return (
-        <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5">
+        <div className="min-h-screen p-5 relative">
+        <div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]"/>
+
+
+{/* Logo watermark */}
+        <div className="flex justify-center">
+            <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[-1]">
+                    <img 
+                        src="/ctt-logo.png"
+                        className="w-auto h-60 object-contain opacity-2 dark:opacity-2" 
+                        alt="back-logo"
+                    />
+            </div>
+        </div>
+
         <div className="max-w-sm mx-auto">
 
 {/* Logo and team name */}
             <div className="flex justify-center">
                 <div className="relative w-50 h-24 flex items-center justify-center">
-                        <div className="bg-white/80 dark:bg-gray-900/80 z-10 rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-2">
-                            <h1 className="relative z-10 text-center text-xl font-medium">{teamName}</h1>
+                        <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-2">
+                            <h1 className="relative text-center text-xl font-medium">{teamName}</h1>
                         </div>
                         <img 
                             src="https://static.wixstatic.com/media/ca73d0_c6b9929de46744dd843625f3b2f98196~mv2.png/v1/fill/w_212,h_84,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Ruban%20BD.png"
-                            className="absolute left-1/2 -translate-x-4 z-0 max-h-full object-contain opacity-80" 
+                            className="absolute left-1/2 -translate-x-4 z-0 max-h-full object-contain opacity-80 z-[-1]" 
                             alt="Background Ribbon"
                         />
                 </div>
@@ -228,7 +242,6 @@ export default function TeamPage() {
                 onClose={handleClosePopup}
             />
             ) : null}
-
         </div>
         </div>
     )

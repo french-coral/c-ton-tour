@@ -84,7 +84,20 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5">
+        <div className="min-h-screen p-5 relative">
+        <div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]"/>
+
+{/* Logo watermark */}
+                <div className="flex justify-center">
+                    <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[-1]">
+                            <img 
+                                src="/ctt-logo.png"
+                                className="w-auto h-60 object-contain opacity-2 dark:opacity-2" 
+                                alt="back-logo"
+                            />
+                    </div>
+                </div>
+{/* Profile picture */}                
             <div className="max-w-sm mx-auto flex flex-col gap-5">
 
                 <div className="flex flex-col items-center mt-4">
@@ -118,7 +131,7 @@ export default function ProfilePage() {
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Envoi en cours...</p>
                     ) : null}
                 </div>
-
+{/* Name of logged in user */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
                     <label className="text-sm text-gray-500 dark:text-gray-400">Nom complet</label>
                     <input
@@ -128,14 +141,14 @@ export default function ProfilePage() {
                         className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 py-1 mt-1 font-medium"
                     />
                 </div>
-
+{/* Current team */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
                     <label className="text-sm text-gray-500 dark:text-gray-400">Equipe actuelle</label>
                     <p className="font-medium mt-1">
                         {teamRider ? teamRider.team.name : "Aucune equipe"}
                     </p>
                 </div>
-
+{/* Team username */}
                 {teamRider ? (
                     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
                         <label className="text-sm text-gray-500 dark:text-gray-400">Pseudo d'équipe</label>
@@ -146,7 +159,7 @@ export default function ProfilePage() {
                             className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 py-1 mt-1 font-medium"/>
                     </div>
                 ) : null}
-
+{/* Delete account */}
                 <button className="text-xs text-gray-400 dark:text-gray-600 underline mt-6 self-center">
                     Supprimer mon compte
                 </button>
