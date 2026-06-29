@@ -18,16 +18,21 @@ export default function SignUp() {
         setErrorMsg(null)
 
         if (password !== confirmPassword) {
-        setErrorMsg("Les mots de passe ne correspondent pas")
+            setErrorMsg("Les mots de passe ne correspondent pas")
         return
         }
 
         const { error } = await signUp(email, password, username)
 
         if (error) {
-        setErrorMsg(error.message)
+            setErrorMsg(error.message)
         } else {
-        window.location.href = "/profile-setup"
+            const pendingCode = sessionStorage.getItem("pendingJoinCode")
+            if (pendingCode) {
+                window.location.href = "/team-setup?code=" + pendingCode
+            } else {
+                window.location.href = "/team-setup"
+            }
         }
     }
 

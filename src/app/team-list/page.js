@@ -1,6 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import {
+  getTeamJoinCode,
+  addPlaceholderRider,
+} from "@/lib/auth"
 import { 
     getTeamName, 
     getTeamRiders, 
@@ -10,11 +15,8 @@ import {
 } from "@/lib/queue"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
-import { supabase } from "@/lib/supabase"
-import {
-  getTeamJoinCode,
-  addPlaceholderRider,
-} from "@/lib/auth"
+import QRCode from "react-qr-code"
+
 
 export default function TeamPage() {
     const [teamName, setTeamName] = useState("")
@@ -188,6 +190,30 @@ export default function TeamPage() {
 		}
 	}
 
+/////////////////////////////////////////////////////////////
+////	    	       	Joining tools   				////
+///////////////////////////////////////////////////////////
+
+    function getJoinUrl(joinCode) {
+        return window.location.origin + "/join/" + joinCode
+    }
+
+    async function handleShareInvite(joinCode) {
+        const url = getJoinUrl(joinCode)
+
+        if (navigator.share) {
+            await navigator.share({
+            title: "Rejoins notre équipe",
+            text: "Rejoins une équipe sur CTonTour !",
+            url: url,
+            })
+        } else {
+            await navigator.clipboard.writeText(url)
+            alert("Lien copié !")
+        }
+    }
+
+
 
     return (
         <div className="min-h-screen p-5 relative">
@@ -271,13 +297,28 @@ export default function TeamPage() {
 {/* Invite window /w invite code */}
                     {addMemberStep === "invite" ? (
                         <div className="text-center">
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                            Code d'équipe
-                        </p>
-                        <p className="text-3xl font-medium tracking-widest">{teamJoinCode}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            Donne ce code a la personne que tu veux inviter
+                            </p>
+                            <p className="text-3xl font-medium tracking-widest mb-4">{teamJoinCode}</p>
+
+                            <div className="flex justify-center mb-4">
+                                <div className="bg-white p-3 rounded-xl">
+                                    <QRCode value={getJoinUrl(teamJoinCode)} size={160} />
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={function () { handleShareInvite(teamJoinCode) }}
+                                className="w-full bg-blue-600 text-white rounded-xl py-2 text-sm"
+                            >
+
+                            Copier le lien
+
+                            </button>
                         </div>
                     ) : null}
-{/* Add placeholder member, not linked to an account */}
+{/*linked to an account */}
                     {addMemberStep === "create" ? (
                         <div className="flex flex-col gap-3">
                         <input

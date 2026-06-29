@@ -28,8 +28,11 @@ import {
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
-import QueueItem from "@/components/QueueItem"
 import { SlidersHorizontal } from "lucide-react"
+import QueueItem from "@/components/QueueItem"
+
+
+
 
 export default function MainPage() {
 	const [team, setTeam] = useState(null)

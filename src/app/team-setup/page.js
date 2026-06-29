@@ -10,6 +10,8 @@ import {
 } from "@/lib/auth"
 import { updateMyTeamRiderName } from "@/lib/profile"
 import { getMyProfile } from "@/lib/profile"
+import { useSearchParams } from "next/navigation"
+
 
 export default function TeamSetup() {
     const [mode, setMode] = useState("create")
@@ -28,6 +30,8 @@ export default function TeamSetup() {
 
     const [errorMsg, setErrorMsg] = useState(null)
 
+    const searchParams = useSearchParams()
+
     useEffect(function () {
         async function loadDefaultUsername() {
         const profileResult = await getMyProfile()
@@ -37,6 +41,16 @@ export default function TeamSetup() {
         }
         }
         loadDefaultUsername()
+    }, [])
+
+    // trynna fetch the code from url
+    useEffect(function () {
+        const codeFromUrl = searchParams.get("code")
+        if (codeFromUrl) {
+            setMode("join")
+            setJoinCode(codeFromUrl)
+            sessionStorage.removeItem("pendingJoinCode")
+        }
     }, [])
 
     async function handleCreateTeam(e) {
