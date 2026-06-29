@@ -177,7 +177,9 @@ export default function TeamSetup() {
                 <label className="text-sm text-gray-500 dark:text-gray-400">Code d'equipe</label>
                 <input
                     value={joinCode}
-                    onChange={function (e) { setJoinCode(e.target.value) }}
+                    onChange={function (e) { setJoinCode(e.target.value.toUpperCase()) }}
+                    autoCapitalize="characters"
+                    inputMode="text"
                     autoComplete="off"
                     className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
                 />

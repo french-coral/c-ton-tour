@@ -58,10 +58,12 @@ export default function Login() {
                 <div>
                     <label className="text-sm text-gray-500 dark:text-gray-400">Email</label>
                     <input
-                    value={email}
-                    onChange={function (e) { setEmail(e.target.value) }}
-                    autoComplete="off"
-                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1 bg-transparent"
+                        value={email}
+                        type="email" 
+                        inputMode="email"
+                        onChange={function (e) { setEmail(e.target.value) }}
+                        autoComplete="off"
+                        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1 bg-transparent"
                     />
                 </div>
 

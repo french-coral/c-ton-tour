@@ -21,7 +21,6 @@ import {
   getPastLaps,
   setAutoFill,
   replenishQueueIfNeeded,
-  updateQueueByStatus,
   setAutoFillTarget,
   emptyQueue,
 } from "@/lib/queue"
@@ -615,7 +614,9 @@ export default function MainPage() {
 						</select>
 
 						<input
-							type="number"
+							type="text"
+							inputMode="numeric"
+							pattern="[0-9]*"
 							min="1"
 							value={editedLapCount}
 							onChange={function (e) { setEditedLapCount(Number(e.target.value)) }}
@@ -831,7 +832,9 @@ export default function MainPage() {
 										<p className="text-sm text-gray-500 dark:text-gray-400">Taille min de la file</p>
 										<div className="flex items-center gap-2">
 										<input
-											type="number"
+											type="text"
+											inputMode="numeric"
+											pattern="[0-9]*"
 											min="1"
 											value={autoFillTargetInput}
 											onChange={function (e) { setAutoFillTargetInput(e.target.value) }}
@@ -865,7 +868,9 @@ export default function MainPage() {
 										</select>
 
 										<input
-											type="number"
+											type="text"
+											inputMode="numeric"
+											pattern="[0-9]*"
 											min="1"
 											value={lapCountToAdd}
 											onChange={function (e) { setLapCountToAdd(Number(e.target.value)) }}
@@ -956,7 +961,9 @@ export default function MainPage() {
 							<div>
 								<label className="text-sm text-gray-500 dark:text-gray-400">Nombre de tours</label>
 								<input
-									type="number"
+									type="text"
+									inputMode="numeric"
+									pattern="[0-9]*"
 									min="1"
 									value={lapCount}
 									onChange={function (e) { setLapCount(Number(e.target.value)) }}

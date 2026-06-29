@@ -76,6 +76,8 @@ export default function SignUp() {
                 <div>
                     <label className="text-sm text-gray-500 dark:text-gray-400">Email</label>
                     <input
+                        type="email" 
+                        inputMode="email"
                         value={email}
                         onChange={function (e) { setEmail(e.target.value) }}
                         autoComplete="off"

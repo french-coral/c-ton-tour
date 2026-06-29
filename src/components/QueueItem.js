@@ -48,7 +48,9 @@ export default function QueueItem({ entry, onDelete, onChangeLapCount }) {
         </div>
 
         <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             min="1"
             value={entry.lapCount}
             onChange={function (e) {
