@@ -716,6 +716,16 @@ export async function emptyQueue(teamId) {
             return { error: deleteResult.error }
         }
     }
-    
+
     return { error: null }
+}
+
+// Used to edit lap history
+export async function updateLapTime(lapId, newTimeSeconds) {
+    const updateResult = await supabase
+        .from('laps')
+        .update({ time_seconds: newTimeSeconds })
+        .eq('id', lapId)
+
+    return { error: updateResult.error }
 }

@@ -23,6 +23,7 @@ import {
   replenishQueueIfNeeded,
   setAutoFillTarget,
   emptyQueue,
+  updateLapTime,
 } from "@/lib/queue"
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
@@ -35,34 +36,44 @@ import QueueItem from "@/components/QueueItem"
 
 
 export default function MainPage() {
+	// Base team and UI values
 	const [team, setTeam] = useState(null)
   	const [queue, setQueue] = useState([])
 	const [averagesByRiderId, setAveragesByRiderId] = useState({})
 	const [elapsedSeconds, setElapsedSeconds] = useState(0)
 	const [isQueueOpen, setIsQueueOpen] = useState(false)
 
+	// Add lap value
 	const [isAddLapOpen, setIsAddLapOpen] = useState(false)
 	const [selectedRiderId, setSelectedRiderId] = useState("")
 	const [lapCount, setLapCount] = useState(1)
 	const [finishTime, setFinishTime] = useState("")
 	const [activeRiders, setActiveRiders] = useState([])
 
+	// Queue adding value
 	const [isAddingToQueue, setIsAddingToQueue] = useState(false)
 	const [riderToAdd, setRiderToAdd] = useState("")
 	const [lapCountToAdd, setLapCountToAdd] = useState(1)
 	const [isReplenishing, setIsReplenishing] = useState(false)
 
+	// Current rider editing
 	const [isEditingCurrentRider, setIsEditingCurrentRider] = useState(false)
 	const [editedRiderId, setEditedRiderId] = useState("")
 	const [editedLapCount, setEditedLapCount] = useState(1)
 
-	const [pastLaps, setPastLaps] = useState([])
-	const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-
+	// Queue content
 	const [isQueueSettingsOpen, setIsQueueSettingsOpen] = useState(false)
 	const [autoFillTargetInput, setAutoFillTargetInput] = useState(5)
 	const [isEmptying, setIsEmptying] = useState(false)
 	const reloadIdRef = useRef(0)
+
+	// Lap time editing
+	const [pastLaps, setPastLaps] = useState([])
+	const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+	const [editingLapId, setEditingLapId] = useState(null)
+	const [editHours, setEditHours] = useState(0)
+	const [editMinutes, setEditMinutes] = useState(0)
+	const [editSeconds, setEditSeconds] = useState(0)
 
 	useLockBodyScroll(isQueueOpen || isAddLapOpen)
 
@@ -151,6 +162,26 @@ export default function MainPage() {
 		}
 	}
 
+
+/////////////////////////////////////////////////////////////
+////	     	   Lap history editing				    ////
+///////////////////////////////////////////////////////////
+
+
+	function openEditLap(lap) {
+		const hms = secondsToHms(lap.time_seconds)
+		setEditHours(hms.hours)
+		setEditMinutes(hms.minutes)
+		setEditSeconds(hms.seconds)
+		setEditingLapId(lap.id)
+	}
+
+	async function handleSaveLapEdit() {
+		const newTotalSeconds = hmsToSeconds(editHours, editMinutes, editSeconds)
+		await updateLapTime(editingLapId, newTotalSeconds)
+		setEditingLapId(null)
+		reloadEverything()
+	}
 
 ////////////////////////////////////////////////////////////
 ////	     	   Update every second				    ////
@@ -310,11 +341,25 @@ export default function MainPage() {
 
 	// A small helper: returns "tour" or "tours" depending on the count
 	function pluralizeTour(count) {
-	if (count === 1) {
-		return "tour"
-	} else {
-		return "tours"
+		if (count === 1) {
+			return "tour"
+		} else {
+			return "tours"
+		}
 	}
+	// Breaks a total number of seconds into separate hours, minutes, seconds
+	function secondsToHms(totalSeconds) {
+		const safeSeconds = Math.max(0, Math.round(totalSeconds))
+		const hours = Math.floor(safeSeconds / 3600)
+		const minutes = Math.floor((safeSeconds % 3600) / 60)
+		const seconds = safeSeconds % 60
+
+		return { hours: hours, minutes: minutes, seconds: seconds }
+	}
+
+	// Combines separate hours, minutes, seconds back into one total
+	function hmsToSeconds(hours, minutes, seconds) {
+		return (hours * 3600) + (minutes * 60) + seconds
 	}
 
 
@@ -1043,12 +1088,66 @@ export default function MainPage() {
 											<p className="text-[10px] text-gray-500 dark:text-gray-400">{pluralizeTour(lap.lap_count)}</p>
 										</div>
 
-										<div className="text-right pl-1">
-											<p className="text-sm font-medium">{formatSeconds(lap.time_seconds)}</p>
-											<p className="text-xs text-gray-500 dark:text-gray-400">
-												{formatPace(lap.time_seconds, lap.lap_count)} / tour
-											</p>
-										</div>
+										{editingLapId === lap.id ? (
+											<div className="flex items-center gap-1 pl-1">
+												<input
+													type="text"
+													inputMode="numeric"
+													pattern="[0-9]*"
+													value={editHours}
+													onChange={function (e) { setEditHours(Number(e.target.value) || 0) }}
+													className="w-8 text-center border border-gray-200 dark:border-gray-700 rounded p-1 text-xs"
+												/>
+												<span className="text-xs text-gray-400">h</span>
+												<input
+													type="text"
+													inputMode="numeric"
+													pattern="[0-9]*"
+													value={editMinutes}
+													onChange={function (e) { setEditMinutes(Number(e.target.value) || 0) }}
+													className="w-8 text-center border border-gray-200 dark:border-gray-700 rounded p-1 text-xs"
+												/>
+												<span className="text-xs text-gray-400">m</span>
+												<input
+													type="text"
+													inputMode="numeric"
+													pattern="[0-9]*"
+													value={editSeconds}
+													onChange={function (e) { setEditSeconds(Number(e.target.value) || 0) }}
+													className="w-8 text-center border border-gray-200 dark:border-gray-700 rounded p-1 text-xs"
+												/>
+												<span className="text-xs text-gray-400">s</span>
+
+												<button
+													onClick={handleSaveLapEdit}
+													aria-label="Valider"
+													className="text-green-600 px-1 text-sm"
+												>
+
+													✓
+
+												</button>
+												<button
+													onClick={function () { setEditingLapId(null) }}
+													aria-label="Annuler"
+													className="text-gray-400 px-1 text-sm"
+												>
+
+													✕
+
+												</button>
+											</div>
+										) : (
+											<button
+												onClick={function () { openEditLap(lap) }}
+												className="text-right pl-1"
+											>
+												<p className="text-sm font-medium">{formatSeconds(lap.time_seconds)}</p>
+												<p className="text-xs text-gray-500 dark:text-gray-400">
+													{formatPace(lap.time_seconds, lap.lap_count)} / tour
+												</p>
+											</button>
+										)}
 									</div>
 							)})
 						)

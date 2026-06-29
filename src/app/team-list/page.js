@@ -204,12 +204,14 @@ export default function TeamPage() {
         if (navigator.share) {
             await navigator.share({
             title: "Rejoins notre équipe",
-            text: "Rejoins une équipe sur CTonTour !",
+            text: "Rejoins l'equipe sur CTonTour !",
             url: url,
             })
-        } else {
+        } else if (navigator.clipboard) {
             await navigator.clipboard.writeText(url)
             alert("Lien copié !")
+        } else {
+            alert("Voici le lien à partager : " + url)
         }
     }
 
