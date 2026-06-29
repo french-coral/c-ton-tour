@@ -3,10 +3,9 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { useState } from "react"
 
-export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange, onPriorityChange }) {
+export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange }) {
 
 	const [statusValue, setStatusValue] = useState(rider.status)
-	const [priorityValue, setPriorityValue] = useState(rider.default_order)
 
 
 /////////////////////////////////////////////////////////////
@@ -18,12 +17,6 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 		const newStatus = e.target.value
 		setStatusValue(newStatus)
 		await onStatusChange(rider.id, newStatus)
-	}
-
-	async function handlePriorityChange(e) {
-		const newPriority = Number(e.target.value)
-		setPriorityValue(newPriority)
-		await onPriorityChange(rider.id, newPriority)
 	}
 
 
@@ -120,17 +113,6 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 					<option value="inactive">Repos</option>
 					<option value="left">Inactif</option>
 					</select>
-				</div>
-{/* Order priority menu*/}
-				<div>
-					<p className="text-[11px] text-gray-400 dark:text-gray-500 mb-1">Priorite</p>
-					<input
-						type="number"
-						min="1"
-						value={priorityValue}
-						onChange={handlePriorityChange}
-						className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 w-16"
-					/>
 				</div>
 			</div>
 

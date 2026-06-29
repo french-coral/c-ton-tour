@@ -6,10 +6,11 @@ import {
     getTeamRiders, 
     getRiderStats,  
     updateRiderStatus, 
-    updateRiderPriority 
+    updateQueueByStatus, 
 } from "@/lib/queue"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
+import { supabase } from "@/lib/supabase"
 import {
   getTeamJoinCode,
   addPlaceholderRider,
@@ -29,6 +30,43 @@ export default function TeamPage() {
     useLockBodyScroll(selectedRider !== null)
 
     const TEAM_ID_NUMBER = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+
+
+/////////////////////////////////////////////////////////////
+////	    	  Realtime edit subscribing		    	////
+///////////////////////////////////////////////////////////
+
+    useEffect(function () {
+        const teamId = TEAM_ID_NUMBER
+
+        const channel = supabase
+            .channel('team-riders-updates-' + teamId)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'team_riders',
+                    filter: 'team_id=eq.' + teamId,
+                },
+                function () {
+                    reloadRiders()
+                }
+            )
+            .subscribe()
+
+        return function () {
+            supabase.removeChannel(channel)
+        }
+    }, [])
+
+    async function reloadRiders() {
+        const teamId = TEAM_ID_NUMBER
+        const ridersResult = await getTeamRiders(teamId)
+        if (!ridersResult.error) {
+            setRiders(ridersResult.riders)
+        }
+    }
 
 
 /////////////////////////////////////////////////////////////
@@ -141,18 +179,9 @@ export default function TeamPage() {
 
     async function handleStatusChange(riderId, newStatus) {
 		await updateRiderStatus(riderId, newStatus)
-
 		const teamId = TEAM_ID_NUMBER
-		const ridersResult = await getTeamRiders(teamId)
-		if (!ridersResult.error) {
-			setRiders(ridersResult.riders)
-		}
-	}
+        await updateQueueByStatus(TEAM_ID_NUMBER)
 
-	async function handlePriorityChange(riderId, newPriority) {
-		await updateRiderPriority(riderId, newPriority)
-
-		const teamId = TEAM_ID_NUMBER
 		const ridersResult = await getTeamRiders(teamId)
 		if (!ridersResult.error) {
 			setRiders(ridersResult.riders)
@@ -314,7 +343,6 @@ export default function TeamPage() {
                 stats={selectedRiderStats}
                 onClose={handleClosePopup}
                 onStatusChange={handleStatusChange}
-                onPriorityChange={handlePriorityChange}
                 
             />
             ) : null}

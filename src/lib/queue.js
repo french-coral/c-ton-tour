@@ -36,49 +36,72 @@ export async function getRiderAverageLapTime(teamRiderId) {
     return { average: totalTime / totalLaps, error: null }
 }
 
-// Move the front of the queue into "current rider", removing it from the queue
-export async function advanceQueue(teamId) {
-    // Find the front of the queue (the next rider in line)
-    const nextInQueueResult = await supabase
+
+export async function updateQueueByStatus(teamId) {
+    // Get the queue of the team
+    const currentQueue = await supabase
         .from('run_queue')
         .select('*')
         .eq('team_id', teamId)
-        .order('position', { ascending: true })
-        .limit(1)
-        .maybeSingle()
 
-    if (nextInQueueResult.error) {
-        return { error: nextInQueueResult.error }
+    if (currentQueue.error) {
+        return { error: currentQueue.error }
     }
 
-    const nextEntry = nextInQueueResult.data
+    const queue = currentQueue.data
 
-    if (!nextEntry) {
+    if (!queue) {
         return { error: { message: 'Queue is empty' } }
     }
 
-    // Promote that entry to be the current runner
-    const updateTeamResult = await supabase
-        .from('teams')
-        .update({
-        current_rider_id: nextEntry.team_rider_id,
-        current_leg_started_at: new Date().toISOString(),
-        current_leg_lap_count: nextEntry.lap_count,
-        })
-        .eq('id', teamId)
+    // Get acive riders
+    const ridersResult = await supabase
+        .from('team_riders')
+        .select('id')
+        .eq('team_id', teamId)
+        .eq('status', 'active')
 
-    if (updateTeamResult.error) {
-        return { error: updateTeamResult.error }
+    if (ridersResult.error) {
+        return { error: ridersResult.error }
+        
     }
 
-    // Remove that entry from the queue, since they are running now
-    const deleteResult = await supabase
-        .from('run_queue')
-        .delete()
-        .eq('id', nextEntry.id)
+    if (!ridersResult.data) {
+        return { error: "No active rider data"}
+    }
 
-    if (deleteResult.error) {
-        return { error: deleteResult.error }
+    const ridersIdInQueue = []
+    const activeRidersIds = []
+
+    // Get riders ids in queue
+    for (const entry of queue) {
+        ridersIdInQueue.push(entry.team_rider_id)
+    }
+
+    // Get active riders ids
+    for (const rider of ridersResult.data) {
+        activeRidersIds.push(rider.id)
+    }
+
+    const queueEntryIdsToDelete = []
+    // Gather ones to delete
+    for (const entry of queue) {
+        if (!activeRidersIds.includes(entry.team_rider_id)) {
+            queueEntryIdsToDelete.push(entry.id)
+        }
+    }
+
+    // Remove all inactive or resting riders
+    for (const queueEntryId of queueEntryIdsToDelete) {
+        // Remove that entry from the queue
+        const deleteResult = await supabase
+            .from('run_queue')
+            .delete()
+            .eq('id', queueEntryId)
+
+        if (deleteResult.error) {
+            return { error: deleteResult.error }
+        }
     }
 
     // Check if this team has Auto Fill turned on
@@ -96,6 +119,8 @@ export async function advanceQueue(teamId) {
 
     // Only top up the queue if Auto Fill is enabled
     if (autoFillIsOn) {
+        console.log("Coucou ya autofill");
+        
         await replenishQueueIfNeeded(teamId)
     }
 
@@ -147,19 +172,33 @@ export async function reorderQueue(orderedIds) {
 
 
 export async function replenishQueueIfNeeded(teamId) {
-    const targetLength = 5
+
+    // Set desired queue length
+    const teamSettingsResult = await supabase
+        .from('teams')
+        .select('auto_fill_target')
+        .eq('id', teamId)
+        .single()
+
+    if (teamSettingsResult.error) {
+        return { error: teamSettingsResult.error }
+    }
+
+    const targetLength = teamSettingsResult.data.auto_fill_target
 
     // How many real entries are currently in the queue?
     const currentQueueResult = await supabase
         .from('run_queue')
-        .select('id')
+        .select('id, team_rider_id, position')
         .eq('team_id', teamId)
+        .order('position', { ascending: false })
 
     if (currentQueueResult.error) {
         return { error: currentQueueResult.error }
     }
 
     const currentLength = currentQueueResult.data.length
+    const existingQueue = currentQueueResult.data
 
     // If we already have enough, there is nothing to do
     if (currentLength >= targetLength) {
@@ -172,7 +211,6 @@ export async function replenishQueueIfNeeded(teamId) {
         .select('id')
         .eq('team_id', teamId)
         .eq('status', 'active')
-        .order('default_order', { ascending: true })
 
     if (ridersResult.error) {
         return { error: ridersResult.error }
@@ -225,33 +263,47 @@ export async function replenishQueueIfNeeded(teamId) {
             return 0
     })
 
-
-      const lastPositionResult = await supabase
-        .from('run_queue')
-        .select('position')
-        .eq('team_id', teamId)
-        .order('position', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+    // The last entry already in the queue 
+    // (existingQueue is sorted by position descending, so the first item is the very last one queued)
+    let previousRiderId = null
+    if (existingQueue.length > 0) {
+        previousRiderId = existingQueue[0].team_rider_id
+    }
 
     let nextPosition = 1
-    if (lastPositionResult.data) {
-        nextPosition = lastPositionResult.data.position + 1
+    if (existingQueue.length > 0) {
+        nextPosition = existingQueue[0].position + 1
     }
 
     const howManyToAdd = targetLength - currentLength
     const newRows = []
 
+    // This pointer walks through sortedRiders, but can be nudged forward
+    // an extra step whenever we would otherwise repeat the previous rider
+    let cyclePointer = 0
+
     for (let i = 0; i < howManyToAdd; i++) {
-        const riderIndex = i % sortedRiders.length
-        const riderId = sortedRiders[riderIndex]
+        let candidateRiderId = sortedRiders[cyclePointer % sortedRiders.length]
+
+        // If this candidate is the same as whoever comes right before it,
+        // and there is more than one active rider to choose from instead,
+        // skip to the next one in the cycle
+        if (candidateRiderId === previousRiderId && sortedRiders.length > 1) {
+            cyclePointer = cyclePointer + 1
+            candidateRiderId = sortedRiders[cyclePointer % sortedRiders.length]
+        }
+
 
         newRows.push({
             team_id: teamId,
-            team_rider_id: riderId,
+            team_rider_id: candidateRiderId,
             lap_count: 1,
             position: nextPosition + i,
         })
+
+        previousRiderId = candidateRiderId
+        cyclePointer = cyclePointer + 1
+        
     }
 
     const insertResult = await supabase
@@ -482,7 +534,7 @@ export async function getTeamName(teamId) {
 export async function getTeamRiders(teamId) {
   const result = await supabase
     .from('team_riders')
-    .select('id, name, status, default_order profile:profile_id(avatar_url), status')
+    .select('id, name, status, profile:profile_id(avatar_url)')
     .eq('team_id', teamId)
     .order('name', { ascending: true })
 
@@ -557,15 +609,6 @@ export async function updateRiderStatus(teamRiderId, newStatus) {
     return { error: updateResult.error }
 }
 
-export async function updateRiderPriority(teamRiderId, newPriority) {
-    const updateResult = await supabase
-        .from('team_riders')
-        .update({ default_order: newPriority })
-        .eq('id', teamRiderId)
-
-    return { error: updateResult.error }
-}
-
 // Autofill queue
 export async function setAutoFill(teamId, isOn) {
     const updateResult = await supabase
@@ -604,7 +647,7 @@ async function getLastRanTimes(teamId, riderIds) {
         const currentLatest = lastRanTimes[lap.team_rider_id]
 
         if (!currentLatest || lap.created_at > currentLatest) {
-        lastRanTimes[lap.team_rider_id] = lap.created_at
+            lastRanTimes[lap.team_rider_id] = lap.created_at
         }
     }
 
@@ -632,4 +675,47 @@ async function getLastRanTimes(teamId, riderIds) {
     }
 
     return { lastRanTimes, error: null }
+}
+
+export async function setAutoFillTarget(teamId, newTarget) {
+    console.log("coucou")
+  const updateResult = await supabase
+    .from('teams')
+    .update({ auto_fill_target: newTarget })
+    .eq('id', teamId)
+
+  return { error: updateResult.error }
+}
+
+export async function emptyQueue(teamId) {
+    // Get the queue of the team
+    const currentQueue = await supabase
+        .from('run_queue')
+        .select('*')
+        .eq('team_id', teamId)
+
+    if (currentQueue.error) {
+        return { error: currentQueue.error }
+    }
+
+    const queue = currentQueue.data
+
+    if (queue.length === 0) {
+        return { error: null }
+    }
+
+    // Remove all inactive or resting riders
+    for (const queueEntry of queue) {
+        // Remove that entry from the queue
+        const deleteResult = await supabase
+            .from('run_queue')
+            .delete()
+            .eq('id', queueEntry.id)
+
+        if (deleteResult.error) {
+            return { error: deleteResult.error }
+        }
+    }
+    
+    return { error: null }
 }

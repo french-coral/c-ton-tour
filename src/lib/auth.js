@@ -24,21 +24,6 @@ export async function login(email, password) {
 // Insert a rider in a team
 export async function addRider(teamId, name, profileId = null) {
 
-        // Find the current highest default_order on this team, so the new
-        // rider goes at the end of the join order by default
-        const maxOrderResult = await supabase
-            .from('team_riders')
-            .select('default_order')
-            .eq('team_id', teamId)
-            .order('default_order', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-
-        let nextOrder = 1
-        if (maxOrderResult.data) {
-            nextOrder = maxOrderResult.data.default_order + 1
-        }
-
         // You also record membership if a rider is linked to a real account
         if (profileId){
             const { error: membershipError } = await supabase
@@ -54,7 +39,6 @@ export async function addRider(teamId, name, profileId = null) {
                 team_id: teamId,
                 profile_id: profileId, // null = placeholder, an id = self or claimed
                 name,
-                default_order: nextOrder,
         })
 
     return { error }

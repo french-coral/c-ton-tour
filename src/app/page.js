@@ -5,7 +5,7 @@
 ////	        Import functions and const 			    ////
 ///////////////////////////////////////////////////////////
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import {
   getTeamState,
@@ -18,18 +18,19 @@ import {
   addToQueue,
   updateCurrentRider,
   updateCurrentLegLapCount,
-  updateRiderStatus, 
-  updateRiderPriority,
   getPastLaps,
   setAutoFill,
-  replenishQueueIfNeeded
+  replenishQueueIfNeeded,
+  updateQueueByStatus,
+  setAutoFillTarget,
+  emptyQueue,
 } from "@/lib/queue"
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import QueueItem from "@/components/QueueItem"
-
+import { SlidersHorizontal } from "lucide-react"
 
 export default function MainPage() {
 	const [team, setTeam] = useState(null)
@@ -47,6 +48,7 @@ export default function MainPage() {
 	const [isAddingToQueue, setIsAddingToQueue] = useState(false)
 	const [riderToAdd, setRiderToAdd] = useState("")
 	const [lapCountToAdd, setLapCountToAdd] = useState(1)
+	const [isReplenishing, setIsReplenishing] = useState(false)
 
 	const [isEditingCurrentRider, setIsEditingCurrentRider] = useState(false)
 	const [editedRiderId, setEditedRiderId] = useState("")
@@ -54,6 +56,11 @@ export default function MainPage() {
 
 	const [pastLaps, setPastLaps] = useState([])
 	const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+	const [isQueueSettingsOpen, setIsQueueSettingsOpen] = useState(false)
+	const [autoFillTargetInput, setAutoFillTargetInput] = useState(5)
+	const [isEmptying, setIsEmptying] = useState(false)
+	const reloadIdRef = useRef(0)
 
 	useLockBodyScroll(isQueueOpen || isAddLapOpen)
 
@@ -73,8 +80,19 @@ export default function MainPage() {
 		loadData()
 	}, [])
 
+	useEffect(function () {
+		if (team) {
+			setAutoFillTargetInput(team.auto_fill_target)
+		}
+	}, [team])
+	
+
 	// Reload all for realtime updates
 	async function reloadEverything() {
+
+		  // Mark this specific call as "the latest one requested"
+		reloadIdRef.current = reloadIdRef.current + 1
+		const thisReloadId = reloadIdRef.current
 
 		// For now hardcoded a team id, this will come from the logged in user later
 		const teamId = TEAM_ID_NUMBER
@@ -86,6 +104,12 @@ export default function MainPage() {
 			console.error(stateResult.error)
 			return
 		}
+		
+		// If a newer reload has started since this one began, throw this
+		// result away - it is stale, a more recent call will handle it
+		if (thisReloadId !== reloadIdRef.current) {
+			return
+  }
 
 		setTeam(stateResult.team)
 		setQueue(stateResult.queue)
@@ -158,45 +182,59 @@ export default function MainPage() {
 
 			// Listen for any change on the teams table, for this specific team
 			.on(
-			'postgres_changes',
-			{
-				event: '*',
-				schema: 'public',
-				table: 'teams',
-				filter: 'id=eq.' + teamId,
-			},
-			function () {
-				reloadEverything()
-			}
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'teams',
+					filter: 'id=eq.' + teamId,
+				},
+				function () {
+					reloadEverything()
+				}
 			)
 
 			// Also listen for any change on the run_queue table, for this team
 			.on(
-			'postgres_changes',
-			{
-				event: '*',
-				schema: 'public',
-				table: 'run_queue',
-				filter: 'team_id=eq.' + teamId,
-			},
-			function () {
-				reloadEverything()
-			}
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'run_queue',
+					filter: 'team_id=eq.' + teamId,
+				},
+				function () {
+					reloadEverything()
+				}
 			)
 
 			// Listen for any change on the laps table, for this specific team
 			.on(
-			'postgres_changes',
-			{
-				event: '*',
-				schema: 'public',
-				table: 'laps',
-				filter: 'id=eq.' + teamId,
-			},
-			function () {
-				reloadEverything()
-			}
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'laps',
+					filter: 'id=eq.' + teamId,
+				},
+				function () {
+					reloadEverything()
+				}
 			)
+
+			// Listen for any change on the team_riders table, for this specific team
+			.on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'team_riders',
+                    filter: 'team_id=eq.' + teamId,
+                },
+                function () {
+                    reloadRiders()
+                }
+            )
 
 			// Actually start listening
 			.subscribe()
@@ -482,6 +520,40 @@ export default function MainPage() {
 		reloadEverything()
 	}
 
+	async function handleAutoFillClick() {
+		if (isReplenishing) {
+			return
+		}
+
+		setIsReplenishing(true)
+
+		try {
+			await replenishQueueIfNeeded(team.id)
+		} finally {
+			setIsReplenishing(false)
+		}
+
+		reloadEverything()
+		
+	}
+
+	async function handleEmptyQueue() {
+
+		setIsEmptying(true)
+
+		try {
+			await emptyQueue(team.id)
+		} finally {
+			setIsEmptying(false)
+		}
+
+		reloadEverything()
+	}
+
+	async function handleSaveAutoFillTarget() {
+		await setAutoFillTarget(team.id, Number(autoFillTargetInput))
+		reloadEverything()
+	}
 
 ////////////////////////////////////////////////////////////
 ////	     		   Page Content					    ////
@@ -507,7 +579,7 @@ export default function MainPage() {
 
 {/* Logo and team name */}
 			<div className="flex justify-center mb-9">
-				<div className="relative w-50 h-24 flex items-center justify-center">
+				<div className="relative w-80 h-24 flex items-center justify-center">
 						<div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4">
 							<h1 className="relative text-center text-xl font-medium">{team.name}</h1>
 						</div>
@@ -655,12 +727,15 @@ export default function MainPage() {
 								<div className="flex items-center justify-between mb-4">
 									<p className="font-medium text-lg">File d'attente</p>
 									<button
-									onClick={function () { setIsQueueOpen(false) }}
-									aria-label="Fermer"
-									className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
+										onClick={function () { setIsQueueOpen(false) }}
+										aria-label="Fermer"
+										className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
 									>
-									✕
+
+										✕
+
 									</button>
+									
 							</div>
 {/* Draggable element space */}
 							<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -689,20 +764,87 @@ export default function MainPage() {
 								</SortableContext>
 							</DndContext>
 
-{/* Add rider popup window */}
-							<div className="flex items-center justify-between mb-3 mt-5 px-1">
-								<p className="text-sm text-gray-500 dark:text-gray-400">Remplissage automatique</p>
+{/* Queue filling options */}					
+
+							<div className="flex items-center gap-2 mb-3 mt-5 px-1 py-3 border-y border-gray-200 dark:border-gray-800">
 								<button
-									onClick={handleToggleAutoFill}
-									className={
-									team.auto_fill
-										? "w-11 h-6 rounded-full bg-blue-600 flex items-center px-1 justify-end"
-										: "w-11 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center px-1 justify-start"
-									}
+									onClick={handleAutoFillClick}
+									disabled={isReplenishing}
+									className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm font-medium bg-white dark:bg-gray-900 active:scale-[0.98] transition-transform disabled:opacity-50"
 								>
-									<div className="w-4 h-4 rounded-full bg-white"></div>
+									{isReplenishing ? "Remplissage..." : "Remplir la file"}
+								</button>
+								<button
+									onClick={handleEmptyQueue}
+									disabled={isEmptying}
+									className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm font-medium bg-white dark:bg-gray-900 active:scale-[0.98] transition-transform disabled:opacity-50"
+								>
+									{isReplenishing ? "Vidage..." : "Vider la file"}
+								</button>
+
+								<button
+									onClick={function () { setIsQueueSettingsOpen(true) }}
+									aria-label="Parametres de remplissage"
+									className="w-9 h-9 flex-shrink-0 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 dark:text-gray-400"
+								>
+									<SlidersHorizontal className="m-2"></SlidersHorizontal>
 								</button>
 							</div>
+{/* Queue filling options menu */}							
+							{isQueueSettingsOpen ? (
+								<div
+									className="fixed inset-0 bg-black/40 flex items-center justify-center p-5"
+									onClick={function () { setIsQueueSettingsOpen(false) }}
+								>
+									<div
+										className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+										onClick={function (e) { e.stopPropagation() }}
+									>
+									<div className="flex items-center justify-between mb-4">
+										<p className="font-medium text-lg">Parametres de remplissage</p>
+										<button
+											onClick={function () { setIsQueueSettingsOpen(false) }}
+											aria-label="Fermer"
+											className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
+										>
+
+										✕
+
+										</button>
+									</div>
+
+									<div className="flex items-center justify-between mb-4">
+										<p className="text-sm text-gray-500 dark:text-gray-400">Remplissage automatique</p>
+										<button
+											onClick={handleToggleAutoFill}
+											className={
+												team.auto_fill
+												? "w-11 h-6 rounded-full bg-blue-600 flex items-center px-1 justify-end transition-colors duration-200"
+												: "w-11 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center px-1 justify-start transition-colors duration-200"
+											}
+										>
+										<div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+										</button>
+									</div>
+
+									<div className="flex items-center justify-between">
+										<p className="text-sm text-gray-500 dark:text-gray-400">Taille min de la file</p>
+										<div className="flex items-center gap-2">
+										<input
+											type="number"
+											min="1"
+											value={autoFillTargetInput}
+											onChange={function (e) { setAutoFillTargetInput(e.target.value) }}
+											onBlur={handleSaveAutoFillTarget}
+											className="w-16 text-center border border-gray-200 dark:border-gray-700 rounded-lg p-1 text-sm bg-white dark:bg-gray-900"
+										/>
+										</div>
+									</div>
+									</div>
+								</div>
+								) : null}
+
+{/* Add rider popup window */}	
 							<div className="mt-5 mb-4">
 								{isAddingToQueue ? (
 									<div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex flex-col gap-2">
@@ -732,15 +874,17 @@ export default function MainPage() {
 
 										<div className="flex gap-2">
 											<button
-											onClick={function () { setIsAddingToQueue(false) }}
-											className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm">
+												onClick={function () { setIsAddingToQueue(false) }}
+												className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm"
+											>
 
 											Annuler
 
 											</button>
 											<button
-											onClick={handleAddRiderToQueue}
-											className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm">
+												onClick={handleAddRiderToQueue}
+												className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm"
+											>
 											
 											Ajouter
 
@@ -764,9 +908,11 @@ export default function MainPage() {
 				) : null}
 
 				<button
-				onClick={openAddLapPopup}
-				className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2">
-				Ajouter un temps
+					onClick={openAddLapPopup}
+					className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2">
+					
+					Ajouter un temps
+
 				</button>
 {/* Add laps of a given rider popup window*/}
 				{isAddLapOpen ? (
