@@ -17,6 +17,7 @@ import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
 import QRCode from "react-qr-code"
 import { useLanguage } from "@/lib/LanguageContext"
+import { useTeam } from "@/lib/TeamContext"
 
 
 export default function TeamPage() {
@@ -34,7 +35,7 @@ export default function TeamPage() {
 
     useLockBodyScroll(selectedRider !== null)
 
-    const TEAM_ID_NUMBER = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+    const { teamId, isLoadingTeam } = useTeam()
 
 
 /////////////////////////////////////////////////////////////
@@ -42,7 +43,10 @@ export default function TeamPage() {
 ///////////////////////////////////////////////////////////
 
     useEffect(function () {
-        const teamId = TEAM_ID_NUMBER
+
+        if (!teamId) {
+                return
+        }
 
         const channel = supabase
             .channel('team-riders-updates-' + teamId)
@@ -63,10 +67,9 @@ export default function TeamPage() {
         return function () {
             supabase.removeChannel(channel)
         }
-    }, [])
+    }, [teamId])
 
     async function reloadRiders() {
-        const teamId = TEAM_ID_NUMBER
         const ridersResult = await getTeamRiders(teamId)
         if (!ridersResult.error) {
             setRiders(ridersResult.riders)
@@ -86,7 +89,6 @@ export default function TeamPage() {
     }
 
     async function handleShowInviteCode() {
-        const teamId = TEAM_ID_NUMBER
         const result = await getTeamJoinCode(teamId)
         if (!result.error) {
             setTeamJoinCode(result.joinCode)
@@ -99,7 +101,6 @@ export default function TeamPage() {
             return
         }
 
-        const teamId = TEAM_ID_NUMBER
         await addPlaceholderRider(teamId, newMemberName)
 
         setNewMemberName("")
@@ -118,22 +119,26 @@ export default function TeamPage() {
 
 
     useEffect(function () {
+
+        if (!teamId) {
+                return
+        }
+
         async function loadData() {
-        const teamId = TEAM_ID_NUMBER
 
-        const nameResult = await getTeamName(teamId)
-        if (!nameResult.error) {
-            setTeamName(nameResult.name)
-        }
+            const nameResult = await getTeamName(teamId)
+            if (!nameResult.error) {
+                setTeamName(nameResult.name)
+            }
 
-        const ridersResult = await getTeamRiders(teamId)
-        if (!ridersResult.error) {
-            setRiders(ridersResult.riders)
-        }
+            const ridersResult = await getTeamRiders(teamId)
+            if (!ridersResult.error) {
+                setRiders(ridersResult.riders)
+            }
         }
 
         loadData()
-    }, [])
+    }, [teamId])
 
 /////////////////////////////////////////////////////////////
 ////	    	           	Tools       				////

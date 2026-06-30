@@ -54,9 +54,9 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 
 	function pluralizeTour(count) {
 		if (count === 1) {
-		return t("main_tour_singular")
+			return t("main_tour_singular")
 		} else {
-		return t("main_tour_plural")
+			return t("main_tour_plural")
 		}
 	}
 	function getStatusColors(status) {

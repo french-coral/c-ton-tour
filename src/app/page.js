@@ -32,7 +32,7 @@ import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import { SlidersHorizontal, Check, X } from "lucide-react"
 import QueueItem from "@/components/QueueItem"
 import { useLanguage } from "@/lib/LanguageContext"
-
+import { useTeam } from "@/lib/TeamContext"
 
 
 
@@ -81,7 +81,7 @@ export default function MainPage() {
 
 	useLockBodyScroll(isQueueOpen || isAddLapOpen)
 
-	const TEAM_ID_NUMBER = "0b6b6787-0506-4a86-8fa1-cabc3f6b701c"
+	const { teamId, isLoadingTeam } = useTeam()
 
 ////////////////////////////////////////////////////////////
 ////	        Load needed data of the team		    ////
@@ -90,12 +90,16 @@ export default function MainPage() {
 
 	// Load the team's current state once when the page opens
 	useEffect(() => {
+		if (!teamId) {
+			return
+		}
+
 		async function loadData() {
-			// Initial loading
 			reloadEverything()
 		}
-		loadData()
-	}, [])
+
+			loadData()
+	}, [teamId])
 
 	useEffect(function () {
 		if (team) {
@@ -110,9 +114,6 @@ export default function MainPage() {
 		  // Mark this specific call as "the latest one requested"
 		reloadIdRef.current = reloadIdRef.current + 1
 		const thisReloadId = reloadIdRef.current
-
-		// For now hardcoded a team id, this will come from the logged in user later
-		const teamId = TEAM_ID_NUMBER
 
 		// Team state (queue and overall team)
 		const stateResult = await getTeamState(teamId)
@@ -195,7 +196,7 @@ export default function MainPage() {
 	// Every second, recalculate how much time has elapsed
 	useEffect(() => {
 		if (!team || !team.current_leg_started_at) {
-		return
+			return
 		}
 
 		const intervalId = setInterval(() => {
@@ -211,7 +212,10 @@ export default function MainPage() {
 
 
 	useEffect(function () {
-		const teamId = TEAM_ID_NUMBER
+
+		if (!teamId) {
+			return
+		}
 
 		// Create a "channel" - this is just a named subscription
 		const channel = supabase
@@ -280,7 +284,16 @@ export default function MainPage() {
 		return function () {
 			supabase.removeChannel(channel)
 		}
-	}, [])
+	}, [teamId])
+
+	if (isLoadingTeam) {
+  		return <p className="text-center mt-10 text-gray-500">{t("main_loading")}</p>
+	}
+
+	if (!teamId) {
+		window.location.replace("/team-setup")
+  		return <p className="text-center mt-10 text-gray-500">{t("main_loading")}</p>
+	}
 
 	if (!team) {
 		return <p className="text-center mt-10 text-gray-500">{t("main_loading")}</p>
