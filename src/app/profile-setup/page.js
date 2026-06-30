@@ -4,6 +4,7 @@ import { useState, useRef } from "react"
 import { getMyProfile, uploadAvatar } from "@/lib/profile"
 import { useEffect } from "react"
 import { useLanguage } from "@/lib/LanguageContext"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function ProfileSetup() {
 	const { t } = useLanguage()
@@ -39,7 +40,7 @@ export default function ProfileSetup() {
 	async function handleAvatarFileChange(e) {
 		const file = e.target.files[0]
 		if (!file) {
-		return
+			return
 		}
 
 		setIsUploadingAvatar(true)
@@ -68,6 +69,7 @@ export default function ProfileSetup() {
 
 	return (
 		<div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5 flex flex-col items-center justify-center">
+			<div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]"/>
 			<div className="max-w-sm w-full flex flex-col items-center gap-5">
 
 				<p className="text-xl font-medium">{t("profile_setup_title")}</p>
@@ -114,6 +116,9 @@ export default function ProfileSetup() {
 					{t("profile_setup_continue")}
 					</button>
 
+				<div className="fixed bottom-20 right-4 z-10">
+					<LanguageSwitcher />
+				</div>
 			</div>
 		</div>
 	)

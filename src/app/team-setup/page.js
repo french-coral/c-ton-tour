@@ -12,6 +12,7 @@ import { updateMyTeamRiderName } from "@/lib/profile"
 import { getMyProfile } from "@/lib/profile"
 import { useSearchParams } from "next/navigation"
 import { useLanguage } from "@/lib/LanguageContext"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 
 export default function TeamSetup() {
@@ -133,8 +134,12 @@ export default function TeamSetup() {
     }
 
     return (
-        <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5 flex flex-col items-center justify-center">
+        <div className="min-h-screen p-5 flex flex-col items-center justify-center">
+            <div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]"/>
             <div className="max-w-sm w-full">
+                <div className="fixed top-4 right-4 z-10">
+                     <LanguageSwitcher />
+                </div>
 
                 <h1 className="text-xl font-medium text-center mb-5">{t("teamsetup_title")}</h1>
 

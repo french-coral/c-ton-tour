@@ -9,6 +9,7 @@ import {
     updateMyTeamRiderName,
 } from "@/lib/profile"
 import { useLanguage } from "@/lib/LanguageContext"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function ProfilePage() {
     const { t } = useLanguage()
@@ -166,6 +167,9 @@ export default function ProfilePage() {
                 <button className="text-xs text-gray-400 dark:text-gray-600 underline mt-6 self-center">
                     {t("profile_delete_account")}
                 </button>
+                <div className="fixed bottom-20 right-4 z-10">
+                    <LanguageSwitcher />
+                </div>
 
             </div>
         </div>

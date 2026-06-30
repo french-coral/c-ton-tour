@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { getTeamByJoinCode } from "@/lib/auth"
 import { useLanguage } from "@/lib/LanguageContext"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function JoinPage() {
     const { t } = useLanguage()
@@ -59,7 +60,26 @@ export default function JoinPage() {
 
     return (
         <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5 flex flex-col items-center justify-center">
+            <div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]"/>
+            <div className="flex justify-center mb-9">
+                    <div className="relative w-50 h-24 flex items-center justify-center mr-15">
+                            <img 
+                                src="https://static.wixstatic.com/media/ca73d0_90dadc8ab54f417c83c8afc52e11119c~mv2.png/v1/fill/w_290,h_97,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/logo.png"
+                                className="relative z-10 max-h-full object-contain"
+                                alt="Logo"
+                            />
+                            <img 
+                                src="https://static.wixstatic.com/media/ca73d0_c6b9929de46744dd843625f3b2f98196~mv2.png/v1/fill/w_212,h_84,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Ruban%20BD.png"
+                                className="absolute left-1/2 -translate-x-4 z-0 max-h-full object-contain opacity-80" 
+                                alt="Background Ribbon"
+                            />
+                    </div>
+                </div>
             <div className="max-w-sm w-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 text-center">
+                <div className="fixed top-4 right-4 z-10">
+                    <LanguageSwitcher />
+                </div>
+
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t("join_invited_to")}</p>
                 <p className="text-2xl font-medium mb-6">{team.name}</p>
 

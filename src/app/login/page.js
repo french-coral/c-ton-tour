@@ -5,6 +5,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Eye, EyeClosed } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function Login() {
     // t() nous donne le bon texte selon la langue active (fr ou en)
@@ -49,8 +50,11 @@ export default function Login() {
         <div className="min-h-screen p-5 flex flex-col items-center justify-center">
   {/* Fond plein ecran, place en arriere-plan (z-[-2]) derriere tout le contenu */}
         <div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]"/>
+            
             <div className="max-w-sm w-full">
-
+            <div className="fixed top-4 right-4 z-10">
+                <LanguageSwitcher />
+            </div>
   {/* Logo + ruban decoratif superposes derriere */}
                 <div className="flex justify-center mb-9">
                     <div className="relative w-50 h-24 flex items-center justify-center mr-15">

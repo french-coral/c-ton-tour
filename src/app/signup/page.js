@@ -5,6 +5,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { Eye, EyeClosed } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
+
 
 export default function SignUp() {
     const { t } = useLanguage()
@@ -53,6 +55,9 @@ export default function SignUp() {
 
 
             <div className="max-w-sm w-full">
+                <div className="fixed top-4 right-4 z-10">
+                    <LanguageSwitcher />
+                </div>
 
                 <div className="flex justify-center mb-9">
                     <div className="relative w-50 h-24 flex items-center justify-center mr-15">
