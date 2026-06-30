@@ -8,8 +8,11 @@ import {
     getMyTeamMembership,
     updateMyTeamRiderName,
 } from "@/lib/profile"
+import { useLanguage } from "@/lib/LanguageContext"
 
 export default function ProfilePage() {
+    const { t } = useLanguage()
+
     const [profile, setProfile] = useState(null)
     const [teamRider, setTeamRider] = useState(null)
     const [fullName, setFullName] = useState("")
@@ -80,7 +83,7 @@ export default function ProfilePage() {
     }
 
     if (!profile) {
-        return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">Chargement...</p>
+        return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">{t("profile_loading")}</p>
     }
 
     return (
@@ -112,7 +115,7 @@ export default function ProfilePage() {
 
                         <button
                             onClick={handleClickEditAvatar}
-                            aria-label="Changer la photo de profil"
+                            aria-label={t("profile_edit_avatar")}
                             className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-sm">
 
                         ✎
@@ -128,12 +131,12 @@ export default function ProfilePage() {
                     </div>
 
                     {isUploadingAvatar ? (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Envoi en cours...</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t("profile_uploading")}</p>
                     ) : null}
                 </div>
 {/* Name of logged in user */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-                    <label className="text-sm text-gray-500 dark:text-gray-400">Nom complet</label>
+                    <label className="text-sm text-gray-500 dark:text-gray-400">{t("profile_full_name")}</label>
                     <input
                         value={fullName}
                         onChange={function (e) { setFullName(e.target.value) }}
@@ -143,15 +146,15 @@ export default function ProfilePage() {
                 </div>
 {/* Current team */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-                    <label className="text-sm text-gray-500 dark:text-gray-400">Equipe actuelle</label>
+                    <label className="text-sm text-gray-500 dark:text-gray-400">{t("profile_current_team")}</label>
                     <p className="font-medium mt-1">
-                        {teamRider ? teamRider.team.name : "Aucune equipe"}
+                        {teamRider ? teamRider.team.name : t("profile_no_team")}
                     </p>
                 </div>
 {/* Team username */}
                 {teamRider ? (
                     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-                        <label className="text-sm text-gray-500 dark:text-gray-400">Pseudo d'équipe</label>
+                        <label className="text-sm text-gray-500 dark:text-gray-400">{t("profile_team_username")}</label>
                         <input
                             value={teamUsername}
                             onChange={function (e) { setTeamUsername(e.target.value) }}
@@ -161,7 +164,7 @@ export default function ProfilePage() {
                 ) : null}
 {/* Delete account */}
                 <button className="text-xs text-gray-400 dark:text-gray-600 underline mt-6 self-center">
-                    Supprimer mon compte
+                    {t("profile_delete_account")}
                 </button>
 
             </div>

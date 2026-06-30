@@ -1,7 +1,7 @@
 "use client"
 
 
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 ////	        Import functions and const 			    ////
 ///////////////////////////////////////////////////////////
 
@@ -29,13 +29,17 @@ import {
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
-import { SlidersHorizontal } from "lucide-react"
+import { SlidersHorizontal, Check, X } from "lucide-react"
 import QueueItem from "@/components/QueueItem"
+import { useLanguage } from "@/lib/LanguageContext"
 
 
 
 
 export default function MainPage() {
+	// Le hook de traduction, dispo partout dans le composant
+	const { t } = useLanguage()
+
 	// Base team and UI values
 	const [team, setTeam] = useState(null)
   	const [queue, setQueue] = useState([])
@@ -279,7 +283,7 @@ export default function MainPage() {
 	}, [])
 
 	if (!team) {
-		return <p className="text-center mt-10 text-gray-500">Chargement...</p>
+		return <p className="text-center mt-10 text-gray-500">{t("main_loading")}</p>
 	}
 
 
@@ -340,11 +344,12 @@ export default function MainPage() {
 	}
 
 	// A small helper: returns "tour" or "tours" depending on the count
+	// (traduit aussi, comme ça pas besoin d'y penser à chaque appel)
 	function pluralizeTour(count) {
 		if (count === 1) {
-			return "tour"
+			return t("main_tour_singular")
 		} else {
-			return "tours"
+			return t("main_tour_plural")
 		}
 	}
 	// Breaks a total number of seconds into separate hours, minutes, seconds
@@ -420,7 +425,7 @@ export default function MainPage() {
 	const nextEntry = queueWithEtas.length > 0 ? queueWithEtas[0] : null
 
 
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 ////	    	 	  Add Lap Popup					    ////
 ///////////////////////////////////////////////////////////
 
@@ -602,7 +607,7 @@ export default function MainPage() {
 		reloadEverything()
 	}
 
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 ////	     		   Page Content					    ////
 ///////////////////////////////////////////////////////////
 
@@ -641,7 +646,7 @@ export default function MainPage() {
 
 {/* Current running rider */}
 				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-8">
-					<p className="text-sm text-gray-500 dark:text-gray-400 mb-3">En course</p>
+					<p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t("main_currently_running")}</p>
 
 {/* Current runner editor */}
 					{isEditingCurrentRider ? (
@@ -675,14 +680,14 @@ export default function MainPage() {
 								onClick={function () { setIsEditingCurrentRider(false) }}
 								className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm">
 
-								Annuler
+								{t("main_cancel")}
 
 							</button>
 							<button
 								onClick={handleSaveCurrentRiderEdit}
 								className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm">
 
-								Valider
+								{t("main_confirm")}
 
 							</button>
 						</div>
@@ -702,17 +707,17 @@ export default function MainPage() {
 							<div className="flex-1">
 								<p className="font-medium text-lg">{team.current_rider.name}</p>
 								<p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-									{team.current_leg_lap_count} {pluralizeTour(team.current_leg_lap_count)} {team.current_leg_lap_count === 1 ? "prévu" : "prévus"}
+									{team.current_leg_lap_count} {pluralizeTour(team.current_leg_lap_count)} {team.current_leg_lap_count === 1 ? t("main_planned_singular") : t("main_planned_plural")}
 								</p>
 							</div>
 						</>
 						) : (
-						<p className="text-gray-500 dark:text-gray-400 flex-1">Personne ne court actuellement</p>
+						<p className="text-gray-500 dark:text-gray-400 flex-1">{t("main_nobody_running")}</p>
 						)}
 
 						<button
 							onClick={openEditCurrentRider}
-							aria-label="Modifier le coureur actuel"
+							aria-label={t("main_edit_current_rider")}
 							className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-1">
 
 						✎
@@ -722,7 +727,7 @@ export default function MainPage() {
 					)}
 {/* Elapsed time of current rider */}
 					<div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-						<span className="text-sm text-gray-500 dark:text-gray-400">Temps écoulé</span>
+						<span className="text-sm text-gray-500 dark:text-gray-400">{t("main_elapsed_time")}</span>
 						<span className="text-xl font-medium ml-auto">{formatSeconds(elapsedSeconds)}</span>
 					</div>
 				</div>
@@ -738,15 +743,15 @@ export default function MainPage() {
 								)}
 							</div>
 						<div className="flex-1">
-							<p className="text-sm text-gray-500 dark:text-gray-400">Suivant</p>
+							<p className="text-sm text-gray-500 dark:text-gray-400">{t("main_next_up")}</p>
 							<p className="font-medium text-sm mt-0.5">{nextEntry.riderName}</p>
 						</div>
 						<div className="text-right">
-							<p className="text-sm text-gray-500 dark:text-gray-400">Dans</p>
+							<p className="text-sm text-gray-500 dark:text-gray-400">{t("main_in")}</p>
 {/* Relay blinking text */}
 							{isOverdue ? (
 								<span className="blink-orange text-red-600 dark:text-orange-400 text-xl font-medium ml-auto">
-									Relai
+									{t("main_relay")}
 								</span>
 							) : (
 								<p className="font-medium text-sm mt-0.5">~ {formatSeconds(nextEntry.etaSeconds)}</p>
@@ -754,14 +759,14 @@ export default function MainPage() {
 						</div>
 						</div>
 					) : (
-						<p className="text-gray-500 dark:text-gray-400">La file d'attente est vide</p>
+						<p className="text-gray-500 dark:text-gray-400">{t("main_queue_empty")}</p>
 					)}
 				</div>
 {/* Queue popup window */}
 				<button
 					onClick={function () { setIsQueueOpen(true) }}
 					className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 dark:border-gray-800 rounded-xl py-3 font-medium text-sm hover:bg-gray-50">
-					Voir la file d'attente
+					{t("main_see_queue")}
 				</button>
 
 				{isQueueOpen ? (
@@ -774,10 +779,10 @@ export default function MainPage() {
 								onClick={function (e) { e.stopPropagation() }}>
 
 								<div className="flex items-center justify-between mb-4">
-									<p className="font-medium text-lg">File d'attente</p>
+									<p className="font-medium text-lg">{t("main_queue_title")}</p>
 									<button
 										onClick={function () { setIsQueueOpen(false) }}
-										aria-label="Fermer"
+										aria-label={t("main_close")}
 										className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
 									>
 
@@ -821,19 +826,19 @@ export default function MainPage() {
 									disabled={isReplenishing}
 									className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm font-medium bg-white dark:bg-gray-900 active:scale-[0.98] transition-transform disabled:opacity-50"
 								>
-									{isReplenishing ? "Remplissage..." : "Remplir la file"}
+									{isReplenishing ? t("main_filling") : t("main_fill_queue")}
 								</button>
 								<button
 									onClick={handleEmptyQueue}
 									disabled={isEmptying}
 									className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm font-medium bg-white dark:bg-gray-900 active:scale-[0.98] transition-transform disabled:opacity-50"
 								>
-									{isReplenishing ? "Vidage..." : "Vider la file"}
+									{isEmptying ? t("main_emptying") : t("main_empty_queue")}
 								</button>
 
 								<button
 									onClick={function () { setIsQueueSettingsOpen(true) }}
-									aria-label="Parametres de remplissage"
+									aria-label={t("main_fill_settings")}
 									className="w-9 h-9 flex-shrink-0 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 dark:text-gray-400"
 								>
 									<SlidersHorizontal className="m-2"></SlidersHorizontal>
@@ -850,10 +855,10 @@ export default function MainPage() {
 										onClick={function (e) { e.stopPropagation() }}
 									>
 									<div className="flex items-center justify-between mb-4">
-										<p className="font-medium text-lg">Parametres de remplissage</p>
+										<p className="font-medium text-lg">{t("main_fill_settings_title")}</p>
 										<button
 											onClick={function () { setIsQueueSettingsOpen(false) }}
-											aria-label="Fermer"
+											aria-label={t("main_close")}
 											className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
 										>
 
@@ -863,7 +868,7 @@ export default function MainPage() {
 									</div>
 
 									<div className="flex items-center justify-between mb-4">
-										<p className="text-sm text-gray-500 dark:text-gray-400">Remplissage automatique</p>
+										<p className="text-sm text-gray-500 dark:text-gray-400">{t("main_auto_fill")}</p>
 										<button
 											onClick={handleToggleAutoFill}
 											className={
@@ -877,7 +882,7 @@ export default function MainPage() {
 									</div>
 
 									<div className="flex items-center justify-between">
-										<p className="text-sm text-gray-500 dark:text-gray-400">Taille min de la file</p>
+										<p className="text-sm text-gray-500 dark:text-gray-400">{t("main_min_queue_size")}</p>
 										<div className="flex items-center gap-2">
 										<input
 											type="text"
@@ -905,7 +910,7 @@ export default function MainPage() {
 											onChange={function (e) { setRiderToAdd(e.target.value) }}
 											className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm"
 										>
-											<option value="">Choisir un coureur</option>
+											<option value="">{t("main_choose_rider")}</option>
 											{activeRiders.map(function (rider) {
 												return (
 													<option key={rider.id} value={rider.id}>
@@ -931,7 +936,7 @@ export default function MainPage() {
 												className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm"
 											>
 
-											Annuler
+											{t("main_cancel")}
 
 											</button>
 											<button
@@ -939,7 +944,7 @@ export default function MainPage() {
 												className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm"
 											>
 											
-											Ajouter
+											{t("main_add")}
 
 											</button>
 										</div>
@@ -948,10 +953,10 @@ export default function MainPage() {
 								) : (
 									<button
 										onClick={function () { setIsAddingToQueue(true) }}
-										aria-label="Ajouter un coureur"
+										aria-label={t("main_add_rider")}
 										className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
 
-									+  Ajouter un coureur
+									{t("main_add_rider_plus")}
 
 									</button>
 								)}
@@ -964,7 +969,7 @@ export default function MainPage() {
 					onClick={openAddLapPopup}
 					className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2">
 					
-					Ajouter un temps
+					{t("main_add_time")}
 
 				</button>
 {/* Add laps of a given rider popup window*/}
@@ -978,10 +983,10 @@ export default function MainPage() {
 						onClick={function (e) { e.stopPropagation() }}>
 						
 						<div className="flex items-center justify-between mb-4">
-							<p className="font-medium text-lg mb-4">Ajouter un temps</p>
+							<p className="font-medium text-lg mb-4">{t("main_add_time")}</p>
 							<button
 								onClick={function () { setIsAddLapOpen(false) }}
-								aria-label="Fermer"
+								aria-label={t("main_close")}
 								className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
 							>
 							✕
@@ -991,7 +996,7 @@ export default function MainPage() {
 						<form onSubmit={handleSubmitLap} className="flex flex-col gap-3">
 
 							<div>
-								<label className="text-sm text-gray-500 dark:text-gray-400">Rider</label>
+								<label className="text-sm text-gray-500 dark:text-gray-400">{t("main_rider_label")}</label>
 								<select
 									value={selectedRiderId}
 									onChange={function (e) { setSelectedRiderId(e.target.value) }}
@@ -1007,7 +1012,7 @@ export default function MainPage() {
 							</div>
 
 							<div>
-								<label className="text-sm text-gray-500 dark:text-gray-400">Nombre de tours</label>
+								<label className="text-sm text-gray-500 dark:text-gray-400">{t("main_lap_count_label")}</label>
 								<input
 									type="text"
 									inputMode="numeric"
@@ -1019,7 +1024,7 @@ export default function MainPage() {
 							</div>
 
 							<div>
-								<label className="text-sm text-gray-500 dark:text-gray-400">Heure de fin</label>
+								<label className="text-sm text-gray-500 dark:text-gray-400">{t("main_finish_time_label")}</label>
 								<input
 									type="datetime-local"
 									step="1"
@@ -1033,12 +1038,12 @@ export default function MainPage() {
 									type="button"
 									onClick={function () { setIsAddLapOpen(false) }}
 									className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2">
-									Annuler
+									{t("main_cancel")}
 								</button>
 								<button
 									type="submit"
 									className="flex-1 bg-blue-600 text-white rounded-xl py-2">
-									Valider
+									{t("main_confirm")}
 								</button>
 							</div>
 						</form>
@@ -1052,7 +1057,7 @@ export default function MainPage() {
 						onClick={function () { setIsHistoryOpen(!isHistoryOpen) }}
 						className="w-full flex items-center justify-between px-4 py-4 text-left font-medium text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
 
-						<span>Historique</span>
+						<span>{t("main_history")}</span>
 						<span className={`text-xs transform transition-transform duration-200 ${isHistoryOpen ? 'rotate-180' : ''}`}>
 							▼
 						</span>
@@ -1064,7 +1069,7 @@ export default function MainPage() {
 					>
 					{pastLaps.length === 0 ? (
 								<p className="text-gray-400 dark:text-gray-500 text-sm text-center py-6">
-									Aucun tour enregistré
+									{t("main_no_laps_yet")}
 								</p>
 						) : (
 							pastLaps.map(function (lap) {
@@ -1081,13 +1086,16 @@ export default function MainPage() {
 											)}
 										</div>
 
-										<p className="font-medium text-sm flex-1">{lap.team_rider.name}</p>
+										{editingLapId !== lap.id ? (
+										<>
+											<p className="font-medium text-sm flex-1">{lap.team_rider.name}</p>
 
-										<div className="text-center px-3 border-l border-r border-gray-100 dark:border-gray-800">
-											<p className="text-base font-medium">{lap.lap_count}</p>
-											<p className="text-[10px] text-gray-500 dark:text-gray-400">{pluralizeTour(lap.lap_count)}</p>
-										</div>
-
+											<div className="text-center px-3 border-l border-r border-gray-100 dark:border-gray-800">
+												<p className="text-base font-medium">{lap.lap_count}</p>
+												<p className="text-[10px] text-gray-500 dark:text-gray-400">{pluralizeTour(lap.lap_count)}</p>
+											</div>
+										</>
+										) : null}
 										{editingLapId === lap.id ? (
 											<div className="flex items-center gap-1 pl-1">
 												<input
@@ -1120,20 +1128,20 @@ export default function MainPage() {
 
 												<button
 													onClick={handleSaveLapEdit}
-													aria-label="Valider"
+													aria-label={t("main_confirm")}
 													className="text-green-600 px-1 text-sm"
 												>
 
-													✓
+													<Check></Check>
 
 												</button>
 												<button
 													onClick={function () { setEditingLapId(null) }}
-													aria-label="Annuler"
+													aria-label={t("main_cancel")}
 													className="text-gray-400 px-1 text-sm"
 												>
 
-													✕
+													<X></X>
 
 												</button>
 											</div>
@@ -1144,7 +1152,7 @@ export default function MainPage() {
 											>
 												<p className="text-sm font-medium">{formatSeconds(lap.time_seconds)}</p>
 												<p className="text-xs text-gray-500 dark:text-gray-400">
-													{formatPace(lap.time_seconds, lap.lap_count)} / tour
+													{formatPace(lap.time_seconds, lap.lap_count)} {t("main_per_lap")}
 												</p>
 											</button>
 										)}

@@ -3,8 +3,11 @@
 import { useState, useRef } from "react"
 import { getMyProfile, uploadAvatar } from "@/lib/profile"
 import { useEffect } from "react"
+import { useLanguage } from "@/lib/LanguageContext"
 
 export default function ProfileSetup() {
+	const { t } = useLanguage()
+
 	const [profile, setProfile] = useState(null)
 	const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
 	const fileInputRef = useRef(null)
@@ -60,56 +63,58 @@ export default function ProfileSetup() {
 	}
 
 	if (!profile) {
-		return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">Chargement...</p>
+		return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">{t("profile_setup_loading")}</p>
 	}
 
 	return (
 		<div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5 flex flex-col items-center justify-center">
-		<div className="max-w-sm w-full flex flex-col items-center gap-5">
+			<div className="max-w-sm w-full flex flex-col items-center gap-5">
 
-			<p className="text-xl font-medium">Ajoute une photo</p>
-			<p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-			(Optionel)
-			</p>
+				<p className="text-xl font-medium">{t("profile_setup_title")}</p>
+				<p className="text-sm text-gray-500 dark:text-gray-400 text-center">
 
-			<div className="relative">
-			<div className="w-28 h-28 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center font-medium text-3xl overflow-hidden">
-				{profile.avatar_url ? (
-				<img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-				) : (
-				getInitials(profile.username)
-				)}
+				{t("profile_setup_optional")}
+
+				</p>
+
+				<div className="relative">
+					<div className="w-28 h-28 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center font-medium text-3xl overflow-hidden">
+						{profile.avatar_url ? (
+							<img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+						) : (
+							getInitials(profile.username)
+						)}
+					</div>
+
+					<button
+						onClick={handleClickEditAvatar}
+						aria-label={t("profile_setup_edit_avatar")}
+						className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-base"
+					>
+						✎
+					</button>
+
+					<input
+						ref={fileInputRef}
+						type="file"
+						accept="image/*"
+						onChange={handleAvatarFileChange}
+						className="hidden"
+					/>
+				</div>
+
+				{isUploadingAvatar ? (
+					<p className="text-xs text-gray-500 dark:text-gray-400">{t("profile_setup_uploading")}</p>
+				) : null}
+
+					<button
+						onClick={handleContinue}
+						className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-4"
+					>
+					{t("profile_setup_continue")}
+					</button>
+
 			</div>
-
-			<button
-				onClick={handleClickEditAvatar}
-				aria-label="Changer la photo de profil"
-				className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-base"
-			>
-				✎
-			</button>
-
-			<input
-				ref={fileInputRef}
-				type="file"
-				accept="image/*"
-				onChange={handleAvatarFileChange}
-				className="hidden"
-			/>
-			</div>
-
-			{isUploadingAvatar ? (
-			<p className="text-xs text-gray-500 dark:text-gray-400">Envoi en cours...</p>
-			) : null}
-
-			<button
-			onClick={handleContinue}
-			className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-4"
-			>
-			Continuer
-			</button>
-
-		</div>
 		</div>
 	)
 }

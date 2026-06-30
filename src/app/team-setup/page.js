@@ -11,9 +11,12 @@ import {
 import { updateMyTeamRiderName } from "@/lib/profile"
 import { getMyProfile } from "@/lib/profile"
 import { useSearchParams } from "next/navigation"
+import { useLanguage } from "@/lib/LanguageContext"
 
 
 export default function TeamSetup() {
+    const { t } = useLanguage()
+
     const [mode, setMode] = useState("create")
 
     // Create-team fields
@@ -73,7 +76,7 @@ export default function TeamSetup() {
         const teamResult = await getTeamByJoinCode(joinCode)
 
         if (teamResult.error || !teamResult.team) {
-        setErrorMsg("Code d'equipe invalide")
+        setErrorMsg(t("teamsetup_invalid_code"))
         return
         }
 
@@ -97,7 +100,7 @@ export default function TeamSetup() {
 
     async function handleConfirmClaim() {
         if (!selectedRiderToClaim) {
-            setErrorMsg("Une erreur est survenue, merci de reessayer.")
+            setErrorMsg(t("teamsetup_claim_error"))
             setJoinStep("claimChoice")
             return
         }
@@ -131,140 +134,140 @@ export default function TeamSetup() {
 
     return (
         <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5 flex flex-col items-center justify-center">
-        <div className="max-w-sm w-full">
+            <div className="max-w-sm w-full">
 
-            <h1 className="text-xl font-medium text-center mb-5">Ton equipe</h1>
+                <h1 className="text-xl font-medium text-center mb-5">{t("teamsetup_title")}</h1>
 
-            <div className="flex gap-2 mb-4">
-            <button
-                onClick={function () { setMode("create") }}
-                className={
-                mode === "create"
-                    ? "flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium"
-                    : "flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400"
-                }
-            >
-                Creer une equipe
-            </button>
-            <button
-                onClick={function () { setMode("join") }}
-                className={
-                mode === "join"
-                    ? "flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium"
-                    : "flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400"
-                }
-            >
-                Rejoindre une equipe
-            </button>
-            </div>
-
-            {mode === "create" ? (
-            <form onSubmit={handleCreateTeam} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
-                <div>
-                <label className="text-sm text-gray-500 dark:text-gray-400">Ton pseudo dans l'equipe</label>
-                <input
-                    value={createUsername}
-                    onChange={function (e) { setCreateUsername(e.target.value) }}
-                    autoComplete="off"
-                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
-                />
-                </div>
-                <div>
-                <label className="text-sm text-gray-500 dark:text-gray-400">Nom de l'equipe</label>
-                <input
-                    value={teamName}
-                    onChange={function (e) { setTeamName(e.target.value) }}
-                    autoComplete="off"
-                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
-                />
-                </div>
-                <button type="submit" className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
-                Creer
-                </button>
-                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
-            </form>
-            ) : null}
-
-            {mode === "join" && joinStep === "enterCode" ? (
-            <form onSubmit={handleSubmitJoinCode} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
-                <div>
-                <label className="text-sm text-gray-500 dark:text-gray-400">Code d'equipe</label>
-                <input
-                    value={joinCode}
-                    onChange={function (e) { setJoinCode(e.target.value.toUpperCase()) }}
-                    autoCapitalize="characters"
-                    inputMode="text"
-                    autoComplete="off"
-                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
-                />
-                </div>
-                <button type="submit" className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
-                Suivant
-                </button>
-                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
-            </form>
-            ) : null}
-
-            {mode === "join" && joinStep === "claimChoice" ? (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                Es-tu deja l'un de ces membres de {foundTeam.name} ?
-                </p>
-
-                {unclaimedRiders.map(function (rider) {
-                return (
+                <div className="flex gap-2 mb-4">
                     <button
-                    key={rider.id}
-                    onClick={function () { handleSelectExistingRider(rider) }}
-                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm"
+                        onClick={function () { setMode("create") }}
+                        className={
+                        mode === "create"
+                            ? "flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium"
+                            : "flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400"
+                        }
                     >
-                    {rider.name}
+                        {t("teamsetup_create_tab")}
                     </button>
-                )
-                })}
+                    <button
+                        onClick={function () { setMode("join") }}
+                        className={
+                        mode === "join"
+                            ? "flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium"
+                            : "flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400"
+                        }
+                    >
+                        {t("teamsetup_join_tab")}
+                    </button>
+                </div>
 
-                <button
-                onClick={handleSelectNewMember}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm text-gray-500 dark:text-gray-400 mt-1"
-                >
-                Aucun de ces membres, je suis nouveau
-                </button>
+                {mode === "create" ? (
+                <form onSubmit={handleCreateTeam} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                    <div>
+                        <label className="text-sm text-gray-500 dark:text-gray-400">{t("teamsetup_username_label")}</label>
+                        <input
+                            value={createUsername}
+                            onChange={function (e) { setCreateUsername(e.target.value) }}
+                            autoComplete="off"
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-sm text-gray-500 dark:text-gray-400">{t("teamsetup_team_name_label")}</label>
+                        <input
+                            value={teamName}
+                            onChange={function (e) { setTeamName(e.target.value) }}
+                            autoComplete="off"
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
+                        />
+                    </div>
+                    <button type="submit" className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
+                        {t("teamsetup_create_button")}
+                    </button>
+                    {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+                </form>
+                ) : null}
+
+                {mode === "join" && joinStep === "enterCode" ? (
+                <form onSubmit={handleSubmitJoinCode} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                    <div>
+                        <label className="text-sm text-gray-500 dark:text-gray-400">{t("teamsetup_join_code_label")}</label>
+                        <input
+                            value={joinCode}
+                            onChange={function (e) { setJoinCode(e.target.value.toUpperCase()) }}
+                            autoCapitalize="characters"
+                            inputMode="text"
+                            autoComplete="off"
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
+                        />
+                    </div>
+                    <button type="submit" className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
+                        {t("teamsetup_next")}
+                    </button>
+                    {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+                </form>
+                ) : null}
+
+                {mode === "join" && joinStep === "claimChoice" ? (
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t("teamsetup_are_you_member")} {foundTeam.name} ?
+                    </p>
+
+                    {unclaimedRiders.map(function (rider) {
+                    return (
+                        <button
+                        key={rider.id}
+                        onClick={function () { handleSelectExistingRider(rider) }}
+                        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm"
+                        >
+                        {rider.name}
+                        </button>
+                    )
+                    })}
+
+                    <button
+                        onClick={handleSelectNewMember}
+                        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm text-gray-500 dark:text-gray-400 mt-1"
+                    >
+                        {t("teamsetup_not_a_member")}
+                    </button>
+                </div>
+                ) : null}
+
+                {mode === "join" && joinStep === "confirmClaim" ? (
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                    <label className="text-sm text-gray-500 dark:text-gray-400">{t("teamsetup_username_label")}</label>
+                    <input
+                        value={finalUsername}
+                        onChange={function (e) { setFinalUsername(e.target.value) }}
+                        autoComplete="off"
+                        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2"
+                    />
+                    <button onClick={handleConfirmClaim} className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
+                        {t("teamsetup_join_button")}
+                    </button>
+                    {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+                </div>
+                ) : null}
+
+                {mode === "join" && joinStep === "newMemberUsername" ? (
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                        <label className="text-sm text-gray-500 dark:text-gray-400">{t("teamsetup_username_label")}</label>
+                        <input
+                            value={finalUsername}
+                            onChange={function (e) { setFinalUsername(e.target.value) }}
+                            autoComplete="off"
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2"
+                        />
+                        <button onClick={handleConfirmNewMember} className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
+                            {t("teamsetup_join_button")}
+                        </button>
+                        {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+                    </div>
+                ) : null}
+
             </div>
-            ) : null}
-
-            {mode === "join" && joinStep === "confirmClaim" ? (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
-                <label className="text-sm text-gray-500 dark:text-gray-400">Ton pseudo dans l'equipe</label>
-                <input
-                value={finalUsername}
-                onChange={function (e) { setFinalUsername(e.target.value) }}
-                autoComplete="off"
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2"
-                />
-                <button onClick={handleConfirmClaim} className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
-                Rejoindre
-                </button>
-                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
-            </div>
-            ) : null}
-
-            {mode === "join" && joinStep === "newMemberUsername" ? (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
-                <label className="text-sm text-gray-500 dark:text-gray-400">Ton pseudo dans l'equipe</label>
-                <input
-                value={finalUsername}
-                onChange={function (e) { setFinalUsername(e.target.value) }}
-                autoComplete="off"
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2"
-                />
-                <button onClick={handleConfirmNewMember} className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
-                Rejoindre
-                </button>
-                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
-            </div>
-            ) : null}
-
-        </div>
         </div>
     )
 }

@@ -543,59 +543,64 @@ export async function getTeamRiders(teamId) {
 
 // Get full stats for one specific rider, used in the detail popup
 export async function getRiderStats(teamRiderId) {
-  const result = await supabase
-    .from('laps')
-    .select('id, lap_count, time_seconds, created_at')
-    .eq('team_rider_id', teamRiderId)
-    .order('created_at', { ascending: true })
+    const result = await supabase
+        .from('laps')
+        .select('id, lap_count, time_seconds, created_at')
+        .eq('team_rider_id', teamRiderId)
+        .order('created_at', { ascending: true })
 
-  if (result.error) {
-    return { stats: null, error: result.error }
-  }
-
-  const laps = result.data
-
-  if (laps.length === 0) {
-    return {
-      stats: {
-        laps: [],
-        averagePace: null,
-        totalLaps: 0,
-        lastLapTime: null,
-        chartData: [],
-      },
-      error: null,
+    if (result.error) {
+        return { stats: null, error: result.error }
     }
-  }
 
-  let totalTime = 0
-  let totalLaps = 0
-  const chartData = []
+    const laps = result.data
 
-  for (const lap of laps) {
-    totalTime = totalTime + lap.time_seconds
-    totalLaps = totalLaps + lap.lap_count
+    if (laps.length === 0) {
+        return {
+        stats: {
+            laps: [],
+            averagePace: null,
+            totalLaps: 0,
+            lastLapTime: null,
+            chartData: [],
+        },
+        error: null,
+        }
+    }
 
-    const paceForThisLap = lap.time_seconds / lap.lap_count
+    let totalTime = 0
+    let totalLaps = 0
+    const chartData = []
 
-    chartData.push({
-      date: lap.created_at,
-      pace: paceForThisLap,
-    })
-  }
+    for (const lap of laps) {
+        totalTime = totalTime + lap.time_seconds
+        totalLaps = totalLaps + lap.lap_count // if you do 3 laps 30 min, it'll push 3 times a 10 min lap
 
-  const averagePace = totalTime / totalLaps
-  const mostRecentLap = laps[laps.length - 1]
+        const paceForThisLap = lap.time_seconds / lap.lap_count
 
-  return {
-    stats: {
-      laps: laps.slice().reverse(),
-      averagePace: averagePace,
-      totalLaps: totalLaps,
-      lastLapTime: mostRecentLap.time_seconds,
-      chartData: chartData,
-    },
-    error: null,
+        // This single database row might represent several laps at once
+        // (e.g. a 10-lap leg). The chart should show one point PER LAP,
+        // not one point per row - so we repeat this same pace value once for every lap it covers.
+        for (let i = 0; i < lap.lap_count; i++) {
+        chartData.push({
+            date: lap.created_at,
+            pace: paceForThisLap,
+        })
+        }
+    }
+
+    const averagePace = totalTime / totalLaps
+    const mostRecentLap = laps[laps.length - 1]
+
+    return {
+        stats: {
+        laps: laps.slice().reverse(),
+        averagePace: averagePace,
+        totalLaps: totalLaps,
+        lastLapTime: mostRecentLap.time_seconds,
+        chartData: chartData,
+        },
+        error: null,
   }
 }
 

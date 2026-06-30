@@ -1,7 +1,12 @@
+"use client"
+
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { useLanguage } from "@/lib/LanguageContext"
 
 export default function QueueItem({ entry, onDelete, onChangeLapCount }) {
+
+    const { t } = useLanguage()
 
     // useSortable gives everything needed to make this one row draggable (with a fucking mobile)
     const sortable = useSortable({ id: entry.id })
@@ -63,7 +68,7 @@ export default function QueueItem({ entry, onDelete, onChangeLapCount }) {
 
         <button
             onClick={function () { onDelete(entry.id) }}
-            aria-label="Supprimer"
+            aria-label={t("queueitem_delete")}
             className="text-gray-400 hover:text-red-500 px-1">
 
             ✕

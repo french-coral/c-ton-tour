@@ -16,9 +16,12 @@ import {
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
 import QRCode from "react-qr-code"
+import { useLanguage } from "@/lib/LanguageContext"
 
 
 export default function TeamPage() {
+    const { t } = useLanguage()
+
     const [teamName, setTeamName] = useState("")
     const [riders, setRiders] = useState([])
     const [selectedRider, setSelectedRider] = useState(null)
@@ -203,15 +206,15 @@ export default function TeamPage() {
 
         if (navigator.share) {
             await navigator.share({
-            title: "Rejoins notre équipe",
-            text: "Rejoins l'equipe sur CTonTour !",
+            title: t("team_share_invite_title"),
+            text: t("team_share_invite_text"),
             url: url,
             })
         } else if (navigator.clipboard) {
             await navigator.clipboard.writeText(url)
-            alert("Lien copié !")
+            alert(t("team_link_copied"))
         } else {
-            alert("Voici le lien à partager : " + url)
+            alert(t("team_share_link_fallback") + url)
         }
     }
 
@@ -253,7 +256,7 @@ export default function TeamPage() {
                 onClick={openAddMemberPopup}
                 className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm mb-3">
 
-                + Ajouter un membre
+                {t("team_add_member")}
 
             </button>
 
@@ -267,10 +270,10 @@ export default function TeamPage() {
                     onClick={function (e) { e.stopPropagation() }}>
 
                     <div className="flex items-center justify-between mb-4">
-                        <p className="font-medium text-lg">Ajouter un membre</p>
+                        <p className="font-medium text-lg">{t("team_add_member_title")}</p>
                         <button
                             onClick={function () { setIsAddMemberOpen(false) }}
-                            aria-label="Fermer"
+                            aria-label={t("team_close")}
                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1">
 
                         ✕
@@ -284,14 +287,14 @@ export default function TeamPage() {
                             onClick={handleShowInviteCode}
                             className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm">
 
-                            Inviter un membre
+                            {t("team_invite_member")}
 
                         </button>
                         <button
                             onClick={function () { setAddMemberStep("create") }}
                             className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm">
 
-                            Créer un membre
+                            {t("team_create_member")}
 
                         </button>
                         </div>
@@ -300,7 +303,7 @@ export default function TeamPage() {
                     {addMemberStep === "invite" ? (
                         <div className="text-center">
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                            Donne ce code a la personne que tu veux inviter
+                            {t("team_invite_instructions")}
                             </p>
                             <p className="text-3xl font-medium tracking-widest mb-4">{teamJoinCode}</p>
 
@@ -315,7 +318,7 @@ export default function TeamPage() {
                                 className="w-full bg-blue-600 text-white rounded-xl py-2 text-sm"
                             >
 
-                            Copier le lien
+                            {t("team_copy_link")}
 
                             </button>
                         </div>
@@ -326,7 +329,7 @@ export default function TeamPage() {
                         <input
                             value={newMemberName}
                             onChange={function (e) { setNewMemberName(e.target.value) }}
-                            placeholder="Nom du rider"
+                            placeholder={t("team_member_name_placeholder")}
                             autoComplete="off"
                             className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2"
                         />
@@ -334,7 +337,7 @@ export default function TeamPage() {
                             onClick={handleCreateMember}
                             className="w-full bg-blue-600 text-white rounded-xl py-2 text-sm"
                         >
-                            Creer
+                            {t("team_create")}
                         </button>
                         </div>
                     ) : null}

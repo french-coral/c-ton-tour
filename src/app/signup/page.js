@@ -4,8 +4,11 @@ import { signUp } from "@/lib/auth"
 import { useState } from "react"
 import Link from "next/link"
 import { Eye, EyeClosed } from "lucide-react"
+import { useLanguage } from "@/lib/LanguageContext"
 
 export default function SignUp() {
+    const { t } = useLanguage()
+
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
@@ -18,7 +21,7 @@ export default function SignUp() {
         setErrorMsg(null)
 
         if (password !== confirmPassword) {
-            setErrorMsg("Les mots de passe ne correspondent pas")
+            setErrorMsg(t("signup_passwords_dont_match"))
         return
         }
 
@@ -69,7 +72,7 @@ export default function SignUp() {
                 <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
 
                 <div>
-                    <label className="text-sm text-gray-500 dark:text-gray-400">Pseudo</label>
+                    <label className="text-sm text-gray-500 dark:text-gray-400">{t("signup_username_label")}</label>
                     <input
                         value={username}
                         onChange={function (e) { setUsername(e.target.value) }}
@@ -79,7 +82,7 @@ export default function SignUp() {
                 </div>
 
                 <div>
-                    <label className="text-sm text-gray-500 dark:text-gray-400">Email</label>
+                    <label className="text-sm text-gray-500 dark:text-gray-400">{t("signup_email_label")}</label>
                     <input
                         type="email" 
                         inputMode="email"
@@ -92,7 +95,7 @@ export default function SignUp() {
 
                 <div className="relative flex flex-col justify-center">
                     <div className="relative w-full">
-                        <label className="text-sm text-gray-500 dark:text-gray-400">Mot de passe</label>
+                        <label className="text-sm text-gray-500 dark:text-gray-400">{t("signup_password_label")}</label>
                         <input
                             value={password}
                             onChange={function (e) { setPassword(e.target.value) }}
@@ -103,7 +106,7 @@ export default function SignUp() {
                         
                         <button 
                             className="absolute right-3 bottom-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            title="Show/Hide Password"
+                            title={t("signup_show_hide_password")}
                             onClick={ () => changePasswordVisibility()}
                         >
                             {passwordVisibility ? 
@@ -117,7 +120,7 @@ export default function SignUp() {
 
                 <div className="relative flex flex-col justify-center">
                     <div className="relative w-full">
-                        <label className="text-sm text-gray-500 dark:text-gray-400">Confirme le mot de passe</label>
+                        <label className="text-sm text-gray-500 dark:text-gray-400">{t("signup_confirm_password_label")}</label>
                         <input
                             value={confirmPassword}
                             onChange={function (e) { setConfirmPassword(e.target.value) }}
@@ -127,7 +130,7 @@ export default function SignUp() {
                         />
                         <button 
                             className="absolute right-3 bottom-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            title="Show/Hide Password"
+                            title={t("signup_show_hide_password")}
                             onClick={ () => changePasswordVisibility()}
                         >
                             {passwordVisibility ? 
@@ -140,15 +143,15 @@ export default function SignUp() {
                 </div>
 
                 <button type="submit" className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium mt-2">
-                    S'inscrire
+                    {t("signup_button")}
                 </button>
 
                 {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
 
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
-                    Deja un compte ?{" "}
+                    {t("signup_already_have_account")}{" "}
                     <Link href="/login" className="text-blue-600 font-medium">
-                        Se connecter
+                        {t("signup_login_link")}
                     </Link>
                 </p>
 

@@ -1,5 +1,6 @@
 import "./globals.css"
 import BottomNav from "@/components/BottomNav"
+import { LanguageProvider } from "@/lib/LanguageContext"
 
 export const metadata = {
 	title: "CTonTour",
@@ -20,8 +21,10 @@ export default function RootLayout({ children }) {
 			<link rel="apple-touch-icon" href="/icon-192.png" />
 		</head>
 		<body className="pb-20">
-			{children}
-			<BottomNav />
+			<LanguageProvider>
+				{children}
+				<BottomNav />
+			</LanguageProvider>
 		</body>
 		</html>
 	)

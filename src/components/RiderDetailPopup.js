@@ -2,8 +2,12 @@
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { useState } from "react"
+import { useLanguage } from "@/lib/LanguageContext"
 
 export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange }) {
+
+	// t() = la fonction magique qui va chercher le bon mot selon la langue active
+	const { t } = useLanguage()
 
 	const [statusValue, setStatusValue] = useState(rider.status)
 
@@ -34,16 +38,25 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 
 	function formatSeconds(totalSeconds) {
 		const safeSeconds = Math.max(0, Math.round(totalSeconds))
+		const heures = Math.floor(safeSeconds / 3600)
 		const minutes = Math.floor(safeSeconds / 60)
 		const seconds = safeSeconds % 60
-		return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0")
+
+		var formattedElapsed = String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0")
+
+		if (heures > 0) {
+			formattedElapsed = String(heures).padStart(1, "0") + ":" + String(minutes % 60).padStart(2, "0") + ":" + String(seconds).padStart(2, "0")
+		}
+
+		return formattedElapsed
 	}
+
 
 	function pluralizeTour(count) {
 		if (count === 1) {
-		return "tour"
+		return t("main_tour_singular")
 		} else {
-		return "tours"
+		return t("main_tour_plural")
 		}
 	}
 	function getStatusColors(status) {
@@ -56,11 +69,10 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 		}
 	}
 
-	// recharts needs an array of plain objects, one per point on the curve
 	const chartPoints = stats
 		? stats.chartData.map(function (point, index) {
 			return {
-			label: "Tour " + (index + 1),
+			label: t("rider_chart_lap_label") + " " + (index + 1),
 			pace: Math.round(point.pace),
 			}
 		})
@@ -93,7 +105,7 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 				
 				<button
 					onClick={onClose}
-					aria-label="Fermer"
+					aria-label={t("rider_close")}
 					className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
 				>
 					✕
@@ -102,22 +114,22 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 {/* Status menu */}		
 			<div className="flex items-center gap-9 pt-3 pb-4 mb-4 border-y border-gray-200 dark:border-gray-700">
 				<div>
-					<p className="text-[11px] text-gray-400 dark:text-gray-500 mb-1">Statut</p>
+					<p className="text-[11px] text-gray-400 dark:text-gray-500 mb-1">{t("rider_status")}</p>
 					<select
 						value={statusValue}
 						onChange={handleStatusChange}
 						className={"text-sm font-medium rounded-lg px-2 py-1 border-0 " + getStatusColors(statusValue)}
 					>
 
-					<option value="active">Actif</option>
-					<option value="inactive">Repos</option>
-					<option value="left">Inactif</option>
+					<option value="active">{t("rider_status_active")}</option>
+					<option value="inactive">{t("rider_status_inactive")}</option>
+					<option value="left">{t("rider_status_left")}</option>
 					</select>
 				</div>
 			</div>
 
 			{!stats ? (
-			<p className="text-gray-500 dark:text-gray-400 text-sm">Chargement...</p>
+			<p className="text-gray-500 dark:text-gray-400 text-sm">{t("rider_loading")}</p>
 			) : (
 			<>
 {/* Rider stats*/}
@@ -126,19 +138,19 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 					<p className="text-sm font-medium">
 					{stats.averagePace ? formatSeconds(stats.averagePace) : "--"}
 					</p>
-					<p className="text-[11px] text-gray-500 dark:text-gray-400">Moyenne / tour</p>
+					<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_average_pace")}</p>
 				</div>
 				<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
 					<p className="text-sm font-medium">{stats.totalLaps}</p>
 					<p className="text-[11px] text-gray-500 dark:text-gray-400">
-					{pluralizeTour(stats.totalLaps)} au total
+					{pluralizeTour(stats.totalLaps)} {t("rider_total_laps_suffix")}
 					</p>
 				</div>
 				<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
 					<p className="text-sm font-medium">
 					{stats.lastLapTime ? formatSeconds(stats.lastLapTime) : "--"}
 					</p>
-					<p className="text-[11px] text-gray-500 dark:text-gray-400">Dernier tour</p>
+					<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_last_lap")}</p>
 				</div>
 				</div>
 {/* Rider Laps Chart*/}
@@ -156,13 +168,13 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 				) : null}
 
 				<p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-				Historique
+				{t("rider_history")}
 				</p>
 {/* Rider lap history*/}
 				<div className="border border-gray-200 dark:border-gray-700 rounded-2xl">
 				{stats.laps.length === 0 ? (
 					<p className="text-sm text-gray-500 dark:text-gray-400 p-4">
-					Aucun tour enregistré
+					{t("rider_no_laps_yet")}
 					</p>
 				) : (
 					stats.laps.map(function (lap, index) {
