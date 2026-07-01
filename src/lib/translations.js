@@ -73,6 +73,11 @@ export const translations = {
     rider_history: "Historique",
     rider_no_laps_yet: "Aucun tour enregistré",
     rider_chart_lap_label: "Tour",
+    rider_average_speed: "Vitesse moy.",
+    rider_total_distance: "Distance totale",
+    rider_total_elevation: "Dénivelé total",
+    rider_per_lap: "/ tour",
+    
 
     // Profile setup page
     profile_setup_title: "Ajoute une photo",
@@ -211,6 +216,10 @@ export const translations = {
     rider_history: "History",
     rider_no_laps_yet: "No laps recorded yet",
     rider_chart_lap_label: "Lap",
+	rider_average_speed: "Avg. speed",
+	rider_total_distance: "Total distance",
+	rider_total_elevation: "Total elevation",
+	rider_per_lap: "/ lap",
 
     // Profile setup page
     profile_setup_title: "Add a photo",

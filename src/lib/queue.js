@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { CIRCUIT_LENGTH_KM, CIRCUIT_ELEVATION_METERS } from './constants'
 
 // Get everything needed to render the Main page for a team
 export async function getTeamState(teamId) {
@@ -577,6 +578,7 @@ export async function getRiderStats(teamRiderId) {
         totalLaps = totalLaps + lap.lap_count // if you do 3 laps 30 min, it'll push 3 times a 10 min lap
 
         const paceForThisLap = lap.time_seconds / lap.lap_count
+        const speedForThisLap = CIRCUIT_LENGTH_KM / (paceForThisLap / 3600)
 
         // This single database row might represent several laps at once
         // (e.g. a 10-lap leg). The chart should show one point PER LAP,
@@ -585,6 +587,7 @@ export async function getRiderStats(teamRiderId) {
         chartData.push({
             date: lap.created_at,
             pace: paceForThisLap,
+            speed: speedForThisLap,
         })
         }
     }
@@ -592,13 +595,39 @@ export async function getRiderStats(teamRiderId) {
     const averagePace = totalTime / totalLaps
     const mostRecentLap = laps[laps.length - 1]
 
+    // km/h = distance / time
+    // averagePace is seconds per single lap
+    // so: km per lap / (seconds per lap / 3600) = km/h
+    const averageSpeed = averagePace
+        ? (CIRCUIT_LENGTH_KM / (averagePace / 3600))
+        : null
+
+    // Total distance covered across all laps
+    const totalDistanceKm = totalLaps * CIRCUIT_LENGTH_KM
+
+    // Total elevation gained across all laps
+    const totalElevationMeters = totalLaps * CIRCUIT_ELEVATION_METERS
+        
+    const lapsWithStats = laps.map(function (lap) {
+        const paceSeconds = lap.time_seconds / lap.lap_count
+        const speedKmh = CIRCUIT_LENGTH_KM / (paceSeconds / 3600)
+        return {
+            ...lap,
+            paceSeconds: paceSeconds,
+            speedKmh: speedKmh,
+        }
+        })
+
     return {
         stats: {
-        laps: laps.slice().reverse(),
-        averagePace: averagePace,
-        totalLaps: totalLaps,
-        lastLapTime: mostRecentLap.time_seconds,
-        chartData: chartData,
+            laps: lapsWithStats.slice().reverse(),
+            averagePace: averagePace,
+            averageSpeed: averageSpeed,
+            totalLaps: totalLaps,
+            totalDistanceKm: totalDistanceKm,
+            totalElevationMeters: totalElevationMeters,
+            lastLapTime: mostRecentLap.time_seconds,
+            chartData: chartData,
         },
         error: null,
   }

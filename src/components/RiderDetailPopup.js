@@ -51,6 +51,21 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 		return formattedElapsed
 	}
 
+	function formatSpeed(kmh) {
+		if (!kmh) return "--"
+			return kmh.toFixed(1) + " km/h"
+	}
+
+	function formatDistance(km) {
+		if (!km) return "--"
+			return km.toFixed(2) + " km"
+	}
+
+	function formatElevation(meters) {
+		if (!meters) return "--"
+			return Math.round(meters) + " m"
+	}
+
 
 	function pluralizeTour(count) {
 		if (count === 1) {
@@ -134,24 +149,43 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 			<>
 {/* Rider stats*/}
 				<div className="grid grid-cols-3 gap-2 mb-4">
-				<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
-					<p className="text-sm font-medium">
-					{stats.averagePace ? formatSeconds(stats.averagePace) : "--"}
-					</p>
-					<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_average_pace")}</p>
-				</div>
-				<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
-					<p className="text-sm font-medium">{stats.totalLaps}</p>
-					<p className="text-[11px] text-gray-500 dark:text-gray-400">
-					{pluralizeTour(stats.totalLaps)} {t("rider_total_laps_suffix")}
-					</p>
-				</div>
-				<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
-					<p className="text-sm font-medium">
-					{stats.lastLapTime ? formatSeconds(stats.lastLapTime) : "--"}
-					</p>
-					<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_last_lap")}</p>
-				</div>
+					<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+						<p className="text-sm font-medium">
+							{stats.averagePace ? formatSeconds(stats.averagePace) : "--"}
+						</p>
+						<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_average_pace")}</p>
+					</div>
+					<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+						<p className="text-sm font-medium">{stats.totalLaps}</p>
+						<p className="text-[11px] text-gray-500 dark:text-gray-400">
+							{pluralizeTour(stats.totalLaps)} {t("rider_total_laps_suffix")}
+						</p>
+					</div>
+					<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+						<p className="text-sm font-medium">
+							{stats.lastLapTime ? formatSeconds(stats.lastLapTime) : "--"}
+						</p>
+						<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_last_lap")}</p>
+					</div>
+
+					<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+						<p className="text-sm font-medium">
+							{formatSpeed(stats.averageSpeed)}
+						</p>
+						<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_average_speed")}</p>
+					</div>
+					<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+						<p className="text-sm font-medium">
+							{formatDistance(stats.totalDistanceKm)}
+						</p>
+						<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_total_distance")}</p>
+					</div>
+					<div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+						<p className="text-sm font-medium">
+							{formatElevation(stats.totalElevationMeters)}
+						</p>
+						<p className="text-[11px] text-gray-500 dark:text-gray-400">{t("rider_total_elevation")}</p>
+					</div>
 				</div>
 {/* Rider Laps Chart*/}
 				{chartPoints.length > 1 ? (
@@ -178,20 +212,28 @@ export default function RiderDetailPopup({ rider, stats, onClose, onStatusChange
 					</p>
 				) : (
 					stats.laps.map(function (lap, index) {
-					return (
-						<div
-						key={lap.id}
-						className={
-							index === 0
-							? "flex items-center justify-between px-4 py-3"
-							: "flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800"
-						}
-						>
-						<p className="text-sm">{lap.lap_count} {pluralizeTour(lap.lap_count)}</p>
-						<p className="text-sm font-medium">{formatSeconds(lap.time_seconds)}</p>
-						</div>
-					)
-					})
+						return (
+							<div
+								key={lap.id}
+								className={
+									index === 0
+									? "flex items-center justify-between px-4 py-3"
+									: "flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800"
+								}
+							>
+								<p className="text-sm">{lap.lap_count} {pluralizeTour(lap.lap_count)}</p>
+
+								<div className="text-right">
+									<p className="text-sm font-medium">
+										{formatSeconds(lap.time_seconds)}
+									</p>
+									<p className="text-xs text-gray-500 dark:text-gray-400">
+										{formatSeconds(lap.paceSeconds)} {t("rider_per_lap")} · {formatSpeed(lap.speedKmh)}
+									</p>
+								</div>
+							</div>
+						)
+						})
 				)}
 				</div>
 
