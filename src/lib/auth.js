@@ -154,3 +154,9 @@ export async function getTeamJoinCode(teamId) {
 
     return { joinCode: result.data ? result.data.join_code : null, error: result.error }
 }
+
+// Simple logout
+export async function logout() {
+  const { error } = await supabase.auth.signOut()
+  return { error }
+}

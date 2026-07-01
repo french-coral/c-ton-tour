@@ -9,18 +9,32 @@ import {
     updateMyTeamRiderName,
 } from "@/lib/profile"
 import { useLanguage } from "@/lib/LanguageContext"
+import { logout } from "@/lib/auth"
+import { supabase } from "@/lib/supabase"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function ProfilePage() {
+
+    // Language module
     const { t } = useLanguage()
 
+    // Profile
     const [profile, setProfile] = useState(null)
     const [teamRider, setTeamRider] = useState(null)
     const [fullName, setFullName] = useState("")
     const [teamUsername, setTeamUsername] = useState("")
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
 
+    // Deletion variables
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+    const [deleteConfirmText, setDeleteConfirmText] = useState("")
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+
     const fileInputRef = useRef(null)
+
+/////////////////////////////////////////////////////////////
+////	    		   	Base load						////
+///////////////////////////////////////////////////////////
 
     useEffect(function () {
         async function loadData() {
@@ -40,6 +54,10 @@ export default function ProfilePage() {
         loadData()
     }, [])
 
+/////////////////////////////////////////////////////////////
+////	    			   	Tools						////
+///////////////////////////////////////////////////////////
+
     function getInitials(name) {
         if (!name) {
             return ""
@@ -49,6 +67,12 @@ export default function ProfilePage() {
         const secondInitial = parts[1] ? parts[1][0] : ""
         return (firstInitial + secondInitial).toUpperCase()
     }
+
+
+/////////////////////////////////////////////////////////////
+////	         Account edit handling					////
+///////////////////////////////////////////////////////////
+
 
     function handleClickEditAvatar() {
         fileInputRef.current.click()
@@ -82,6 +106,61 @@ export default function ProfilePage() {
         }
         await updateMyTeamRiderName(teamRider.id, teamUsername)
     }
+    async function handleLogout() {
+        await logout()
+        window.location.href = "/login"
+    }
+
+// Account deletion
+    async function handleDeleteAccount() {
+        if (deleteConfirmText !== "DELETE") {
+            return
+        }
+
+        setIsDeletingAccount(true)
+
+        // Get the current session token to send with the request
+        const sessionResult = await supabase.auth.getSession()
+        const token = sessionResult.data.session?.access_token
+
+        if (!token) {
+            setIsDeletingAccount(false)
+            return
+        }
+
+        let response
+        try {
+            response = await fetch(
+                "https://nfjnmqpluedjpzigfheu.supabase.co/functions/v1/delete-account",
+                {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json",
+                },
+                }
+            )
+        } catch (err) {
+            console.error("Fetch failed:", err)
+            setIsDeletingAccount(false)
+            return
+        }
+
+        console.log("Response status:", response.status)
+        const result = await response.json()
+        console.log("Response body:", result)
+
+        if (result.error) {
+            console.error(result.error)
+            setIsDeletingAccount(false)
+            return
+        }
+
+        // Account deleted — sign out locally and send them to signup
+        await supabase.auth.signOut()
+        window.location.href = "/signup"
+    }
+
 
     if (!profile) {
         return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">{t("profile_loading")}</p>
@@ -153,6 +232,7 @@ export default function ProfilePage() {
                     </p>
                 </div>
 {/* Team username */}
+
                 {teamRider ? (
                     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
                         <label className="text-sm text-gray-500 dark:text-gray-400">{t("profile_team_username")}</label>
@@ -163,10 +243,97 @@ export default function ProfilePage() {
                             className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 py-1 mt-1 font-medium"/>
                     </div>
                 ) : null}
+
 {/* Delete account */}
-                <button className="text-xs text-gray-400 dark:text-gray-600 underline mt-6 self-center">
-                    {t("profile_delete_account")}
-                </button>
+
+                <div className="flex flex-col items-center gap-3 mt-6 w-full">
+
+                    <button
+                        onClick={handleLogout}
+                        className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                        {t("profile_logout")}
+                    </button>
+
+                    <button
+                        onClick={function () { setIsDeleteOpen(true) }}
+                        className="w-full bg-transparent border border-red-400 dark:border-red-600 rounded-xl py-3 text-sm font-medium text-red-500 dark:text-red-400"
+                    >
+                        {t("profile_delete_account")}
+                    </button>
+
+                </div>
+
+                {isDeleteOpen ? (
+                    <div
+                        className="fixed inset-0 bg-black/40 flex items-center justify-center p-5"
+                        onClick={function () {
+                        setIsDeleteOpen(false)
+                        setDeleteConfirmText("")
+                        }}
+                    >
+                        <div
+                            className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+                            onClick={function (e) { e.stopPropagation() }}
+                        >
+                        <div className="flex items-center justify-between mb-4">
+                            <p className="font-medium text-lg">{t("profile_delete_title")}</p>
+                            <button
+                                onClick={function () {
+                                    setIsDeleteOpen(false)
+                                    setDeleteConfirmText("")
+                                }}
+                                aria-label={t("profile_close")}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
+                            >
+
+                            ✕
+
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            {t("profile_delete_warning")}
+                        </p>
+
+                        <div className="mb-4">
+                            <label className="text-sm text-gray-500 dark:text-gray-400">
+                                {t("profile_delete_instruction")}
+                            </label>
+                            <input
+                                value={deleteConfirmText}
+                                onChange={function (e) { setDeleteConfirmText(e.target.value) }}
+                                placeholder="DELETE"
+                                autoComplete="off"
+                                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1 font-mono text-sm tracking-widest"
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={function () {
+                                    setIsDeleteOpen(false)
+                                    setDeleteConfirmText("")
+                                }}
+                                className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm"
+                            >
+                                {t("profile_cancel")}
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleteConfirmText !== "DELETE" || isDeletingAccount}
+                                className="flex-1 bg-transparent border border-red-400 dark:border-red-600 rounded-xl py-2 text-sm font-medium text-red-500 dark:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                {isDeletingAccount ? t("profile_deleting") : t("profile_delete_confirm")}
+                            </button>
+                        </div>
+
+                        </div>
+                    </div>
+                ) : null}
+
+{/* Language switcher */}
+
                 <div className="fixed bottom-20 right-4 z-10">
                     <LanguageSwitcher />
                 </div>

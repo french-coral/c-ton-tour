@@ -96,6 +96,14 @@ export const translations = {
     profile_no_team: "Aucune équipe",
     profile_team_username: "Pseudo d'équipe",
     profile_delete_account: "Supprimer mon compte",
+	profile_logout: "Se déconnecter",
+	profile_delete_title: "Supprimer mon compte",
+	profile_delete_warning: "Cette action est irréversible. Toutes tes données seront définitivement supprimées.",
+	profile_delete_instruction: "Tape DELETE pour confirmer",
+	profile_cancel: "Annuler",
+	profile_delete_confirm: "Supprimer",
+	profile_deleting: "Suppression...",
+	profile_close: "Fermer",
 
     // Team list page
     team_add_member: "+ Ajouter un membre",
@@ -248,6 +256,14 @@ export const translations = {
     profile_no_team: "No team",
     profile_team_username: "Team nickname",
     profile_delete_account: "Delete my account",
+	profile_logout: "Log out",
+	profile_delete_title: "Delete my account",
+	profile_delete_warning: "This action is irreversible. All your data will be permanently deleted.",
+	profile_delete_instruction: "Type DELETE to confirm",
+	profile_cancel: "Cancel",
+	profile_delete_confirm: "Delete",
+	profile_deleting: "Deleting...",
+	profile_close: "Close",
 
     // Team list page
     team_add_member: "+ Add a member",
