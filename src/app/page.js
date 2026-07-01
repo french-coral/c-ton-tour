@@ -626,7 +626,7 @@ export default function MainPage() {
 
 
 	return (
-        <div className="min-h-screen p-5 relative">
+        <div className="min-h-screen p-5 pb-28 relative overflow-x-hidden">
         <div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]"/>
 
 {/* Logo watermark */}

@@ -42,7 +42,13 @@ export default function BottomNav() {
 	const isTeamActive = currentPath === "/team-list"
 
 	return (
-		<div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 pt-2 pb-4">
+		<div 
+			className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 pt-3"
+        	style={{
+				transform: "translate3d(0, 0, 0)", 
+            	paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" 
+        	}}
+			>
 			<div className="flex items-center justify-between max-w-sm mx-auto">
 
 				<Link href="/profile" className="flex flex-col items-center gap-1 flex-1">

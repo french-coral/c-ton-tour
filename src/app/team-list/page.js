@@ -189,8 +189,7 @@ export default function TeamPage() {
 
     async function handleStatusChange(riderId, newStatus) {
 		await updateRiderStatus(riderId, newStatus)
-		const teamId = TEAM_ID_NUMBER
-        await updateQueueByStatus(TEAM_ID_NUMBER)
+        await updateQueueByStatus(teamId)
 
 		const ridersResult = await getTeamRiders(teamId)
 		if (!ridersResult.error) {
