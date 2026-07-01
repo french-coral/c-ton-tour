@@ -633,6 +633,59 @@ export async function getRiderStats(teamRiderId) {
   }
 }
 
+// Get stats of the all team
+export async function getTeamStats(teamId) {
+    const result = await supabase
+        .from('laps')
+        .select('time_seconds, lap_count, team_rider_id, team_riders!inner(team_id)')
+        .eq('team_riders.team_id', teamId)
+
+    if (result.error) {
+        return { stats: null, error: result.error }
+    }
+
+    const laps = result.data
+
+    if (laps.length === 0) {
+        return {
+        stats: {
+            totalRelays: 0,
+            totalLaps: 0,
+            averageLapTime: null,
+            averageSpeed: null,
+            totalDistanceKm: 0,
+            totalElevationMeters: 0,
+        },
+        error: null,
+        }
+    }
+
+    let totalTime = 0
+    let totalLaps = 0
+
+    for (const lap of laps) {
+        totalTime = totalTime + lap.time_seconds
+        totalLaps = totalLaps + lap.lap_count
+    }
+
+    const averageLapTime = totalTime / totalLaps
+    const averageSpeed = CIRCUIT_LENGTH_KM / (averageLapTime / 3600)
+    const totalDistanceKm = totalLaps * CIRCUIT_LENGTH_KM
+    const totalElevationMeters = totalLaps * CIRCUIT_ELEVATION_METERS
+
+    return {
+        stats: {
+        totalRelays: laps.length,
+        totalLaps: totalLaps,
+        averageLapTime: averageLapTime,
+        averageSpeed: averageSpeed,
+        totalDistanceKm: totalDistanceKm,
+        totalElevationMeters: totalElevationMeters,
+        },
+        error: null,
+    }
+}
+
 // Update a rider priority_order
 export async function updateRiderStatus(teamRiderId, newStatus) {
     const updateResult = await supabase

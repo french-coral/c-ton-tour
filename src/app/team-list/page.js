@@ -11,7 +11,8 @@ import {
     getTeamRiders, 
     getRiderStats,  
     updateRiderStatus, 
-    updateQueueByStatus, 
+    updateQueueByStatus,
+    getTeamStats,
 } from "@/lib/queue"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
@@ -23,15 +24,21 @@ import { useTeam } from "@/lib/TeamContext"
 export default function TeamPage() {
     const { t } = useLanguage()
 
+    // Team handling
     const [teamName, setTeamName] = useState("")
     const [riders, setRiders] = useState([])
     const [selectedRider, setSelectedRider] = useState(null)
     const [selectedRiderStats, setSelectedRiderStats] = useState(null)
 
+    // Member joining handling
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
     const [addMemberStep, setAddMemberStep] = useState("choose")
     const [teamJoinCode, setTeamJoinCode] = useState(null)
     const [newMemberName, setNewMemberName] = useState("")
+
+    // Team stats
+    const [teamStats, setTeamStats] = useState(null)
+    const [isStatsOpen, setIsStatsOpen] = useState(true)
 
     useLockBodyScroll(selectedRider !== null)
 
@@ -135,6 +142,11 @@ export default function TeamPage() {
             if (!ridersResult.error) {
                 setRiders(ridersResult.riders)
             }
+
+            const statsResult = await getTeamStats(teamId)
+            if (!statsResult.error) {
+                setTeamStats(statsResult.stats)
+            }
         }
 
         loadData()
@@ -159,6 +171,36 @@ export default function TeamPage() {
         } else {
             return { label: "I", bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-500 dark:text-gray-300" }
         }
+    }
+
+    function formatSeconds(totalSeconds) {
+        const safeSeconds = Math.max(0, Math.round(totalSeconds))
+        const heures = Math.floor(safeSeconds / 3600)
+        const minutes = Math.floor(safeSeconds / 60)
+        const seconds = safeSeconds % 60
+
+        var formatted = String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0")
+
+        if (heures > 0) {
+            formatted = String(heures) + ":" + String(minutes % 60).padStart(2, "0") + ":" + String(seconds).padStart(2, "0")
+        }
+
+        return formatted
+    }
+
+    function formatSpeed(kmh) {
+        if (!kmh) return "--"
+            return kmh.toFixed(1) + " km/h"
+    }
+
+    function formatDistance(km) {
+        if (!km && km !== 0) return "--"
+            return km.toFixed(2) + " km"
+    }
+
+    function formatElevation(meters) {
+        if (!meters && meters !== 0) return "--"
+            return Math.round(meters) + " m"
     }
 
 
@@ -255,6 +297,67 @@ export default function TeamPage() {
                         />
                 </div>
             </div>
+{/* Team stats panel */} 
+            {teamStats ? (
+                <div
+                    onClick={function () { setIsStatsOpen(!isStatsOpen) }}
+                    className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3 overflow-hidden cursor-pointer"
+                >
+                    <div className={"transition-all duration-300 ease-in-out " + (isStatsOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0")}>
+                        <div className="grid grid-cols-3 gap-px bg-gray-100 dark:bg-gray-800">
+
+                            <div className="bg-white dark:bg-gray-900 p-3 text-center">
+                                <p className="text-sm font-medium">
+                                    {teamStats.averageLapTime ? formatSeconds(teamStats.averageLapTime) : "--"}
+                                </p>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("team_stats_avg_time")}</p>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-900 p-3 text-center">
+                                <p className="text-sm font-medium">
+                                    {teamStats.totalLaps}
+                                </p>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("team_stats_total_laps")}</p>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-900 p-3 text-center">
+                                <p className="text-sm font-medium">
+                                    {teamStats.totalRelays}
+                                </p>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("team_stats_total_relays")}</p>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-900 p-3 text-center">
+                                <p className="text-sm font-medium">
+                                    {formatSpeed(teamStats.averageSpeed)}
+                                </p>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("team_stats_avg_speed")}</p>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-900 p-3 text-center">
+                                <p className="text-sm font-medium">
+                                    {formatDistance(teamStats.totalDistanceKm)}
+                                </p>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("team_stats_total_distance")}</p>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-900 p-3 text-center">
+                                <p className="text-sm font-medium">
+                                    {formatElevation(teamStats.totalElevationMeters)}
+                                </p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("team_stats_total_elevation")}</p>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-800">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+                        {isStatsOpen ? t("team_stats_hide") : t("team_stats_show")}
+                    </p>
+                    </div>
+                </div>
+                ) : null}
 {/* Add a member */}            
             <button
                 onClick={openAddMemberPopup}

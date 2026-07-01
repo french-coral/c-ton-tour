@@ -112,6 +112,16 @@ export const translations = {
     team_link_copied: "Lien copié !",
     team_share_link_fallback: "Voici le lien à partager : ",
 
+	// Team stats
+	team_stats_avg_time: "Temps moy. / tour",
+	team_stats_total_laps: "Tours au total",
+	team_stats_total_relays: "Relais",
+	team_stats_avg_speed: "Vitesse moy.",
+	team_stats_total_distance: "Distance totale",
+	team_stats_total_elevation: "Dénivelé total",
+	team_stats_hide: "Stats d'équipe",
+	team_stats_show: "Stats d'équipe",
+
     // Team setup page
     teamsetup_title: "Ton équipe",
     teamsetup_create_tab: "Créer une équipe",
@@ -253,6 +263,16 @@ export const translations = {
     team_share_invite_text: "Join the team on CTonTour!",
     team_link_copied: "Link copied!",
     team_share_link_fallback: "Here is the link to share: ",
+
+	// Team stats
+	team_stats_avg_time: "Avg. time / lap",
+	team_stats_total_laps: "Total laps",
+	team_stats_total_relays: "Relays",
+	team_stats_avg_speed: "Avg. speed",
+	team_stats_total_distance: "Total distance",
+	team_stats_total_elevation: "Total elevation",
+	team_stats_hide: "Team Stats",
+	team_stats_show: "Team Stats",
 
     // Team setup page
     teamsetup_title: "Your team",
