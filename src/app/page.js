@@ -32,11 +32,16 @@ import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import { SlidersHorizontal, Check, X } from "lucide-react"
 import QueueItem from "@/components/QueueItem"
 import { useLanguage } from "@/lib/LanguageContext"
+import { useRouteGuard } from "@/lib/useRouteGuard"
 import { useTeam } from "@/lib/TeamContext"
 
 
 
 export default function MainPage() {
+
+	// Route proofing
+	const { isChecking } = useRouteGuard({ requireAuth: true, requireTeam: true })
+
 	// Le hook de traduction, dispo partout dans le composant
 	const { t } = useLanguage()
 
@@ -285,6 +290,8 @@ export default function MainPage() {
 			supabase.removeChannel(channel)
 		}
 	}, [teamId])
+
+	if (isChecking) return null
 
 	if (isLoadingTeam) {
   		return <p className="text-center mt-10 text-gray-500">{t("main_loading")}</p>

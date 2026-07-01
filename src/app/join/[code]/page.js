@@ -8,6 +8,8 @@ import { useLanguage } from "@/lib/LanguageContext"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function JoinPage() {
+
+    // Language hook
     const { t } = useLanguage()
 
     const params = useParams()
@@ -15,11 +17,14 @@ export default function JoinPage() {
 
     const [isLoading, setIsLoading] = useState(true)
     const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [alreadyInTeam, setAlreadyInTeam] = useState(false)
     const [team, setTeam] = useState(null)
     const [errorMsg, setErrorMsg] = useState(null)
 
     useEffect(function () {
         async function checkEverything() {
+
+            // Is join code valid ?
             const teamResult = await getTeamByJoinCode(joinCode)
 
             if (teamResult.error || !teamResult.team) {
@@ -31,7 +36,28 @@ export default function JoinPage() {
             setTeam(teamResult.team)
 
             const sessionResult = await supabase.auth.getSession()
-            setIsLoggedIn(sessionResult.data.session !== null)
+            const loggedIn = sessionResult.data.session !== null
+            setIsLoggedIn(loggedIn)
+
+
+            // If logged in, check whether they already have a team
+            if (loggedIn) {
+                const userResult = await supabase.auth.getUser()
+                const userId = userResult.data.user?.id
+
+                if (userId) {
+                    const membershipResult = await supabase
+                        .from('team_memberships')
+                        .select('team_id')
+                        .eq('user_id', userId)
+                        .maybeSingle()
+
+                    if (membershipResult.data) {
+                        setAlreadyInTeam(true)
+                    }
+                }
+            }
+
             setIsLoading(false)
         }
 
@@ -56,6 +82,25 @@ export default function JoinPage() {
 
     if (errorMsg) {
         return <p className="text-center mt-10 text-red-500">{errorMsg}</p>
+    }
+    
+    if (alreadyInTeam) {
+        return (
+            <div className="bg-gray-100 dark:bg-gray-950 min-h-screen p-5 flex flex-col items-center justify-center">
+                <div className="max-w-sm w-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 text-center">
+                    <p className="font-medium text-lg mb-2">{team.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                        {t("join_already_in_team")}
+                    </p>
+                    <button
+                        onClick={function () { window.location.href = "/" }}
+                        className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium"
+                    >
+                        {t("join_go_home")}
+                    </button>
+                </div>
+            </div>
+        )
     }
 
     return (

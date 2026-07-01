@@ -12,10 +12,16 @@ import { updateMyTeamRiderName } from "@/lib/profile"
 import { getMyProfile } from "@/lib/profile"
 import { useSearchParams } from "next/navigation"
 import { useLanguage } from "@/lib/LanguageContext"
+import { useRouteGuard } from "@/lib/useRouteGuard"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 
 export default function TeamSetup() {
+
+    // Route proofing
+    const { isChecking } = useRouteGuard({ requireAuth: true, requireNoTeam: true })
+
+    // Language module
     const { t } = useLanguage()
 
     const [mode, setMode] = useState("create")
@@ -132,6 +138,8 @@ export default function TeamSetup() {
         window.location.href = "/"
         }
     }
+
+    if (isChecking) return null
 
     return (
         <div className="min-h-screen p-5 flex flex-col items-center justify-center">

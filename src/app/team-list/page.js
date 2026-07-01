@@ -18,10 +18,16 @@ import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
 import QRCode from "react-qr-code"
 import { useLanguage } from "@/lib/LanguageContext"
+import { useRouteGuard } from "@/lib/useRouteGuard"
 import { useTeam } from "@/lib/TeamContext"
 
 
 export default function TeamPage() {
+
+    // Route proofing
+    const { isChecking } = useRouteGuard({ requireAuth: true, requireTeam: true })
+
+    // Langaage module
     const { t } = useLanguage()
 
     // Team handling
@@ -264,7 +270,7 @@ export default function TeamPage() {
         }
     }
 
-
+    if (isChecking) return null
 
     return (
         <div className="min-h-screen p-5 pb-28 relative overflow-x-hidden">

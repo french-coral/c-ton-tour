@@ -111,16 +111,44 @@ export async function addPlaceholderRider(teamId, name) {
 
 
 // Claim an existing placeholder rider (added by a teammate, no account yet)
-export async function claimRider(teamRiderId) {
-    const { data: userData } = await supabase.auth.getUser()
+export async function claimRider(riderId) {
+    const userResult = await supabase.auth.getUser()
 
-    const { error } = await supabase
+    if (userResult.error || !userResult.data.user) {
+        return { error: { message: 'Not logged in' } }
+    }
+
+    const userId = userResult.data.user.id
+
+    // Update the rider row to link this account
+    const updateResult = await supabase
         .from('team_riders')
-        .update({ profile_id: userData.user.id })
-        .eq('id', teamRiderId)
+        .update({ profile_id: userId })
+        .eq('id', riderId)
         .is('profile_id', null)
 
-    return { error }
+    if (updateResult.error) {
+        return { error: updateResult.error }
+    }
+
+    // Find out which team this rider belongs to,
+    // so we can insert into team_memberships
+    const riderResult = await supabase
+        .from('team_riders')
+        .select('team_id')
+        .eq('id', riderId)
+        .single()
+
+    if (riderResult.error) {
+        return { error: riderResult.error }
+    }
+
+    // Create the membership row so RLS write policies work
+    const membershipResult = await supabase
+        .from('team_memberships')
+        .insert({ team_id: riderResult.data.team_id, user_id: userId })
+
+    return { error: membershipResult.error }
 }
 
 // On joining a team
@@ -157,6 +185,6 @@ export async function getTeamJoinCode(teamId) {
 
 // Simple logout
 export async function logout() {
-  const { error } = await supabase.auth.signOut()
-  return { error }
+    const { error } = await supabase.auth.signOut()
+    return { error }
 }

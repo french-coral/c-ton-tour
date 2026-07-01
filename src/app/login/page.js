@@ -5,9 +5,14 @@ import { useState } from "react"
 import Link from "next/link"
 import { Eye, EyeClosed } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
+import { useRouteGuard } from "@/lib/useRouteGuard"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function Login() {
+
+    // Route proofind
+    const { isChecking } = useRouteGuard({ requireNoAuth: true })
+    
     // t() nous donne le bon texte selon la langue active (fr ou en)
     const { t } = useLanguage()
 
@@ -45,6 +50,8 @@ export default function Login() {
             setPasswordVisibility(true)
         }
     }
+
+    if (isChecking) return null
 
     return (
         <div className="min-h-screen p-5 flex flex-col items-center justify-center">

@@ -148,6 +148,9 @@ export const translations = {
     // Queue item object
     queueitem_delete: "Supprimer",
 
+	// Routing errors
+	join_already_in_team: "Tu fais déjà partie d'une équipe.",
+
     // Navigation bar
     nav_profile: "Profil",
     nav_race: "Course",
@@ -158,6 +161,7 @@ export const translations = {
     join_invalid_invite: "Ce lien d'invitation n'est plus valide",
     join_invited_to: "On t'invite dans l'équipe ",
     join_button: "Rejoindre cette équipe",
+    join_go_home: "Retour à l'accueil",
 
   },
 
@@ -307,6 +311,9 @@ export const translations = {
 
     // Queue item object
     queueitem_delete: "Delete",
+
+	// Routing errors
+	join_already_in_team: "You're already part of a team.",
     
     // Navigation bar
     nav_profile: "Profile",
@@ -318,6 +325,7 @@ export const translations = {
     join_invalid_invite: "This invite link is no longer valid",
     join_invited_to: "You're invited to join ",
     join_button: "Join this team",
+    join_go_home: "Back to home",
 
   },
 }

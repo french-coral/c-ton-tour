@@ -9,11 +9,15 @@ import {
     updateMyTeamRiderName,
 } from "@/lib/profile"
 import { useLanguage } from "@/lib/LanguageContext"
+import { useRouteGuard } from "@/lib/useRouteGuard"
 import { logout } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function ProfilePage() {
+
+    // Route proofing
+    const { isChecking } = useRouteGuard({ requireAuth: true })
 
     // Language module
     const { t } = useLanguage()
@@ -161,6 +165,8 @@ export default function ProfilePage() {
         window.location.href = "/signup"
     }
 
+
+    if (isChecking) return null
 
     if (!profile) {
         return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">{t("profile_loading")}</p>

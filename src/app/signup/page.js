@@ -5,10 +5,15 @@ import { useState } from "react"
 import Link from "next/link"
 import { Eye, EyeClosed } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
+import { useRouteGuard } from "@/lib/useRouteGuard"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 
 export default function SignUp() {
+
+    // Route proofing
+    const { isChecking } = useRouteGuard({ requireNoAuth: true })
+
     const { t } = useLanguage()
 
     const [email, setEmail] = useState("")
@@ -48,6 +53,8 @@ export default function SignUp() {
             setPasswordVisibility(true)
         }
     }
+    
+    if (isChecking) return null
 
     return (
         <div className="min-h-screen p-5 flex flex-col items-center justify-center">
