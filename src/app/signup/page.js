@@ -29,10 +29,12 @@ export default function SignUp() {
 
         if (password !== confirmPassword) {
             setErrorMsg(t("signup_passwords_dont_match"))
-        return
+            return
         }
 
+        console.log("Gate 0")
         const { error } = await signUp(email, password, username)
+        console.log("Gate 1")
 
         if (error) {
             setErrorMsg(error.message)
@@ -167,8 +169,18 @@ export default function SignUp() {
                     </Link>
                 </p>
 
-                </form>
+{/* Legal mentions */}
+                    <hr className="border-gray-500 mt-2"></hr>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
+                        {t("legal_continue_text")}
+                            <Link href="/legal/terms" className="text-blue-600 font-medium"> {t("legal_terms_of_use")} </Link>
+                        {t("legal_continue_follow_up")}
+                            <Link href="/legal/privacy" className="text-blue-600 font-medium"> {t("legal_privacy_policy")}</Link>
+                        .
+                    </p>
 
+                </form>
+                <Link href="/legal" className="underline text-sm text-gray-500 dark:text-gray-400 text-center mt-2 flex justify-center mt-10"> {t("legal_mentions")} </Link>
             </div>
         </div>
     )

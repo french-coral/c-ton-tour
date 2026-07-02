@@ -168,6 +168,19 @@ export const translations = {
     join_button: "Rejoindre cette équipe",
     join_go_home: "Retour à l'accueil",
 
+    // Legal
+    legal_terms_of_use: "Conditions d'utilisation",
+    legal_acceptable_use: "Modalités d'utilisation",
+    legal_cookies: "Politiques de cookie",
+    legal_legal_notice: "Mentions légales",
+    legal_privacy_policy: "Politiques de confidentialité",
+    legal_branding_notice: "Opensource et marque déposée",
+    legal_continue_text: "En continuant, vous acceptez les",
+    legal_continue_follow_up: "et les",
+    legal_mentions: "Mentions légales",
+
+
+
   },
 
   en: {
@@ -336,6 +349,17 @@ export const translations = {
     join_invited_to: "You're invited to join ",
     join_button: "Join this team",
     join_go_home: "Back to home",
+
+    // Legal
+    legal_terms_of_use: "Terms of use",
+    legal_acceptable_use: "Acceptable use",
+    legal_cookies: "Cookie policy",
+    legal_legal_notice: "Legal notice",
+    legal_privacy_policy: "Privacy policy",
+    legal_branding_notice: "Open source and branding notice",
+    legal_continue_text: "By continuing, you agree to the",
+    legal_continue_follow_up: "and",
+    legal_mentions: "Legal notices",
 
   },
 }
