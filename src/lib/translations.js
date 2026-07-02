@@ -104,6 +104,7 @@ export const translations = {
 	profile_delete_confirm: "Supprimer",
 	profile_deleting: "Suppression...",
 	profile_close: "Fermer",
+    profile_legal_information: "Mentions légales",
 
     // Team list page
     team_add_member: "+ Ajouter un membre",
@@ -269,6 +270,7 @@ export const translations = {
 	profile_delete_confirm: "Delete",
 	profile_deleting: "Deleting...",
 	profile_close: "Close",
+    profile_legal_information: "Legal mentions",
 
     // Team list page
     team_add_member: "+ Add a member",

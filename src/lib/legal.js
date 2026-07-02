@@ -31,7 +31,8 @@ export const LEGAL_DOCS = {
     acceptableUse: "acceptable-use-policy",
     legalNotice: "legal-notice",
     openSource: "open-source-and-branding",
-    cookieBanner: "cookie-banner"
+    cookieBanner: "cookie-banner",
+    readme: "README",
 };
 
 

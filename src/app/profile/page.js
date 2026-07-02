@@ -12,6 +12,7 @@ import { useLanguage } from "@/lib/LanguageContext"
 import { useRouteGuard } from "@/lib/useRouteGuard"
 import { logout } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
+import { Settings } from "lucide-react"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function ProfilePage() {
@@ -33,6 +34,9 @@ export default function ProfilePage() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
     const [deleteConfirmText, setDeleteConfirmText] = useState("")
     const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+
+    // Settings (delete, logout, legal)
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
     const fileInputRef = useRef(null)
 
@@ -250,25 +254,77 @@ export default function ProfilePage() {
                     </div>
                 ) : null}
 
+{/* Settings button */}
+                <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="fixed bottom-20 left-4 w-12 h-12 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow flex items-center justify-center text-lg"
+                >
+                    <Settings className="text-gray-400 flex-shrink-0"></Settings>
+                </button>
+
+{/* Setting menu */}
+                {isSettingsOpen ? (
+                    <div
+                        className="fixed inset-0 bg-black/40 flex items-center justify-center p-5 z-50"
+                        onClick={() => setIsSettingsOpen(false)}
+                    >
+                        <div
+                            className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+
+                            {/* Header */}
+                            <div className="flex items-center justify-between mb-4">
+                                <p className="font-medium text-lg">Settings</p>
+
+                                <button
+                                    onClick={() => setIsSettingsOpen(false)}
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl px-1"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className="flex flex-col gap-3">
+
+{/* Legal */}
+                                <a
+                                    href="/legal"
+                                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium text-center"
+                                >
+                                    {t("profile_legal_information")}
+                                </a>
+
+{/* Logout */}
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
+                                >
+                                    {t("profile_logout")}
+                                </button>
+
 {/* Delete account */}
+                                <button
+                                    onClick={function () {
+                                        setIsSettingsOpen(false);
+                                        setIsDeleteOpen(true);
+                                    }}
+                                    className="w-full bg-transparent border border-red-400 dark:border-red-600 rounded-xl py-3 text-sm font-medium text-red-500 dark:text-red-400"
+                                >
+                                    {t("profile_delete_account")}
+                                </button>
 
-                <div className="flex flex-col items-center gap-3 mt-6 w-full">
+                            </div>
 
-                    <button
-                        onClick={handleLogout}
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                        {t("profile_logout")}
-                    </button>
+{/* Footer */}
+                            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 text-center text-xs text-gray-500">
+                                © {new Date().getFullYear()} C-Ton-Tour
+                            </div>
 
-                    <button
-                        onClick={function () { setIsDeleteOpen(true) }}
-                        className="w-full bg-transparent border border-red-400 dark:border-red-600 rounded-xl py-3 text-sm font-medium text-red-500 dark:text-red-400"
-                    >
-                        {t("profile_delete_account")}
-                    </button>
+                        </div>
+                    </div>
+                ) : null}
 
-                </div>
 
                 {isDeleteOpen ? (
                     <div
