@@ -155,6 +155,7 @@ export const translations = {
     nav_profile: "Profil",
     nav_race: "Course",
     nav_team: "Équipe",
+    nav_join_team : "Équipe",
 
     // Join /w code page
     join_loading: "Chargement...",
@@ -319,6 +320,7 @@ export const translations = {
     nav_profile: "Profile",
     nav_race: "Race",
     nav_team: "Team",
+    nav_join_team : "Team",
 
     // Join /w code page
     join_loading: "Loading...",

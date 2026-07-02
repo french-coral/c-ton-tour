@@ -24,6 +24,7 @@ import {
   setAutoFillTarget,
   emptyQueue,
   updateLapTime,
+  updateQueueByStatus,
 } from "@/lib/queue"
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
@@ -277,8 +278,9 @@ export default function MainPage() {
                     table: 'team_riders',
                     filter: 'team_id=eq.' + teamId,
                 },
-                function () {
-                    reloadRiders()
+                async function () {
+					await updateQueueByStatus(teamId)
+                    reloadEverything()
                 }
             )
 
@@ -481,7 +483,7 @@ export default function MainPage() {
 		setIsAddLapOpen(false)
 
 		// Reload the page's data so the new current runner and queue show up
-		window.location.reload()
+		reloadEverything()
 	}
 
 

@@ -764,14 +764,14 @@ async function getLastRanTimes(teamId, riderIds) {
     return { lastRanTimes, error: null }
 }
 
+// Change autofill queue target number
 export async function setAutoFillTarget(teamId, newTarget) {
-    console.log("coucou")
-  const updateResult = await supabase
-    .from('teams')
-    .update({ auto_fill_target: newTarget })
-    .eq('id', teamId)
+    const updateResult = await supabase
+        .from('teams')
+        .update({ auto_fill_target: newTarget })
+        .eq('id', teamId)
 
-  return { error: updateResult.error }
+    return { error: updateResult.error }
 }
 
 export async function emptyQueue(teamId) {

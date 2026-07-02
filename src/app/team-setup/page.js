@@ -55,12 +55,23 @@ export default function TeamSetup() {
 
     // trynna fetch the code from url
     useEffect(function () {
+        // First check the URL for a code (direct link from join page)
         const codeFromUrl = searchParams.get("code")
+
         if (codeFromUrl) {
             setMode("join")
             setJoinCode(codeFromUrl)
             sessionStorage.removeItem("pendingJoinCode")
         }
+
+        // Also check sessionStorage (code survives nav bar navigation)
+        const codeFromStorage = sessionStorage.getItem("pendingJoinCode")
+
+        if (codeFromStorage) {
+            setMode("join")
+            setJoinCode(codeFromStorage)
+        }
+
     }, [])
 
     async function handleCreateTeam(e) {
@@ -70,9 +81,9 @@ export default function TeamSetup() {
         const result = await createTeam(teamName, createUsername)
 
         if (result.error) {
-        setErrorMsg(result.error.message)
+            setErrorMsg(result.error.message)
         } else {
-        window.location.href = "/"
+            window.location.href = "/"
         }
     }
 
@@ -83,15 +94,21 @@ export default function TeamSetup() {
         const teamResult = await getTeamByJoinCode(joinCode)
 
         if (teamResult.error || !teamResult.team) {
-        setErrorMsg(t("teamsetup_invalid_code"))
-        return
+            setErrorMsg(t("teamsetup_invalid_code"))
+            return
         }
 
         const unclaimedResult = await getUnclaimedRiders(teamResult.team.id)
-
+        const unclaimed = unclaimedResult.riders || []
         setFoundTeam(teamResult.team)
-        setUnclaimedRiders(unclaimedResult.riders || [])
-        setJoinStep("claimChoice")
+        setUnclaimedRiders(unclaimed)
+
+        // If no unclaimed riders exist, skip straight to new member flow
+        if (unclaimed.length === 0) {
+            setJoinStep("newMemberUsername")
+        } else {
+            setJoinStep("claimChoice")
+        }
     }
 
     function handleSelectExistingRider(rider) {
