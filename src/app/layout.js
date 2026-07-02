@@ -2,6 +2,7 @@ import "./globals.css"
 import BottomNav from "@/components/BottomNav"
 import { LanguageProvider } from "@/lib/LanguageContext"
 import { TeamProvider } from "@/lib/TeamContext"
+import OfflineBanner from "@/components/OfflineBanner"
 
 
 export const metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({ children }) {
 			<body className="pb-20">
 				<LanguageProvider>
 					<TeamProvider>
+						<OfflineBanner />
 						{children}
 						<BottomNav />
 					</TeamProvider>

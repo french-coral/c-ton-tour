@@ -94,6 +94,20 @@ export default function MainPage() {
 ///////////////////////////////////////////////////////////
 
 
+	useEffect(function () {
+		function handleVisibilityChange() {
+			if (document.visibilityState === "visible") {
+				reloadEverything()
+			}
+		}
+
+		document.addEventListener("visibilitychange", handleVisibilityChange)
+
+		return function () {
+			document.removeEventListener("visibilitychange", handleVisibilityChange)
+		}
+	}, [])
+
 	// Load the team's current state once when the page opens
 	useEffect(() => {
 		if (!teamId) {

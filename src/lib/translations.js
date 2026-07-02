@@ -152,6 +152,9 @@ export const translations = {
 	// Routing errors
 	join_already_in_team: "Tu fais déjà partie d'une équipe.",
 
+    // Offline warning
+    offline_warning: "Pas de connexion internet — les données peuvent être obsolètes",
+
     // Navigation bar
     nav_profile: "Profil",
     nav_race: "Course",
@@ -317,6 +320,9 @@ export const translations = {
 
 	// Routing errors
 	join_already_in_team: "You're already part of a team.",
+
+    // Offline warning
+    offline_warning: "No internet connection — data may be outdated",
     
     // Navigation bar
     nav_profile: "Profile",

@@ -22,6 +22,7 @@ import { useRouteGuard } from "@/lib/useRouteGuard"
 import { useTeam } from "@/lib/TeamContext"
 
 
+
 export default function TeamPage() {
 
     // Route proofing
@@ -31,7 +32,14 @@ export default function TeamPage() {
     const { t } = useLanguage()
 
     // Team handling
-    const [teamName, setTeamName] = useState("")
+    const [teamName, setTeamName] = useState(
+        function () {
+            if (typeof window !== "undefined") {
+                return localStorage.getItem("cached_team_name") || ""
+            }
+                return ""
+        }
+    )
     const [riders, setRiders] = useState([])
     const [selectedRider, setSelectedRider] = useState(null)
     const [selectedRiderStats, setSelectedRiderStats] = useState(null)
@@ -43,7 +51,15 @@ export default function TeamPage() {
     const [newMemberName, setNewMemberName] = useState("")
 
     // Team stats
-    const [teamStats, setTeamStats] = useState(null)
+    const [teamStats, setTeamStats] = useState(
+        function () {
+            if (typeof window !== "undefined") {
+                const cached = localStorage.getItem("cached_team_stats")
+                return cached ? JSON.parse(cached) : null
+            }
+                return null
+        }
+    )
     const [isStatsOpen, setIsStatsOpen] = useState(true)
 
     useLockBodyScroll(selectedRider !== null)
@@ -54,6 +70,22 @@ export default function TeamPage() {
 /////////////////////////////////////////////////////////////
 ////	    	  Realtime edit subscribing		    	////
 ///////////////////////////////////////////////////////////
+
+
+    // Reload on refocus on page
+    useEffect(function () {
+        function handleVisibilityChange() {
+            if (document.visibilityState === "visible") {
+                reloadRiders()
+            }
+        }
+
+        document.addEventListener("visibilitychange", handleVisibilityChange)
+
+        return function () {
+            document.removeEventListener("visibilitychange", handleVisibilityChange)
+        }
+    }, [])
 
     useEffect(function () {
 
@@ -81,6 +113,8 @@ export default function TeamPage() {
             supabase.removeChannel(channel)
         }
     }, [teamId])
+
+
 
     async function reloadRiders() {
         const ridersResult = await getTeamRiders(teamId)
@@ -142,6 +176,7 @@ export default function TeamPage() {
             const nameResult = await getTeamName(teamId)
             if (!nameResult.error) {
                 setTeamName(nameResult.name)
+                localStorage.setItem("cached_team_name", nameResult.name)
             }
 
             const ridersResult = await getTeamRiders(teamId)
@@ -152,6 +187,7 @@ export default function TeamPage() {
             const statsResult = await getTeamStats(teamId)
             if (!statsResult.error) {
                 setTeamStats(statsResult.stats)
+                localStorage.setItem("cached_team_stats", JSON.stringify(statsResult.stats))
             }
         }
 
