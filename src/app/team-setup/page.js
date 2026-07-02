@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import {
   createTeam,
   joinTeam,
@@ -16,7 +16,7 @@ import { useRouteGuard } from "@/lib/useRouteGuard"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 
-export default function TeamSetup() {
+function TeamSetupInner() {
 
     // Route proofing
     const { isChecking } = useRouteGuard({ requireAuth: true, requireNoTeam: true })
@@ -299,5 +299,13 @@ export default function TeamSetup() {
 
             </div>
         </div>
+    )
+}
+
+export default function TeamSetup() {
+    return (
+        <Suspense fallback={null}>
+            <TeamSetupInner />
+        </Suspense>
     )
 }
