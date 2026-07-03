@@ -10,6 +10,7 @@ export const translations = {
     signup_button: "S'inscrire",
     signup_already_have_account: "Déjà un compte ?",
     signup_login_link: "Se connecter",
+    signup_username_required: "Le pseudo est obligatoire",
 
     // Login page
     login_title: "Connexion",
@@ -105,6 +106,7 @@ export const translations = {
 	profile_deleting: "Suppression...",
 	profile_close: "Fermer",
     profile_legal_information: "Mentions légales",
+    profile_leave_team: "Quitter l'équipe",
 
     // Team list page
     team_add_member: "+ Ajouter un membre",
@@ -120,6 +122,9 @@ export const translations = {
     team_share_invite_text: "Rejoins l'equipe sur CTonTour !",
     team_link_copied: "Lien copié !",
     team_share_link_fallback: "Voici le lien à partager : ",
+    team_delete_rider_title: "Supprimer ce rider ?",
+    team_delete_rider_warning: "Cette action est irréversible. Tous les temps de",
+    team_delete_rider_confirm: "Supprimer",
 
 	// Team stats
 	team_stats_avg_time: "Temps moy. / tour",
@@ -179,7 +184,18 @@ export const translations = {
     legal_continue_follow_up: "et les",
     legal_mentions: "Mentions légales",
 
-
+    // Mail verifications
+    mail_await_sign_in: "Connexion en cours...",
+    mail_confirmed: "Email vérifié",
+    mail_verified_success: "Votre compte a bien été vérifié",
+    mail_return_to_app: "Vous pouvez désormais revenir à l'application.",
+    mail_go_to_app_link: "Se connecter",
+    mail_check_email: "Consultez vos e-mails",
+    mail_link_sent: "Nous avons envoyé un lien de confirmation à",
+    mail_page_update: "Dès que vous cliquerez sur le lien, cette page s'actualisera automatiquement.",
+    mail_check_verification: "Vérification en cours...",
+    mail_sending_email: "Envoi en cours...",
+    mail_resend_email: "Renvoyer l'e-mail",
 
   },
 
@@ -194,6 +210,7 @@ export const translations = {
     signup_button: "Sign up",
     signup_already_have_account: "Already have an account?",
     signup_login_link: "Log in",
+    signup_username_required: "Username is required",
 
     // Login page
     login_title: "Log in",
@@ -287,6 +304,7 @@ export const translations = {
 	profile_deleting: "Deleting...",
 	profile_close: "Close",
     profile_legal_information: "Legal mentions",
+    profile_leave_team: "Leave team",
 
     // Team list page
     team_add_member: "+ Add a member",
@@ -302,6 +320,9 @@ export const translations = {
     team_share_invite_text: "Join the team on CTonTour!",
     team_link_copied: "Link copied!",
     team_share_link_fallback: "Here is the link to share: ",
+    team_delete_rider_title: "Delete this rider?",
+    team_delete_rider_warning: "This is permanent. All lap times for",
+    team_delete_rider_confirm: "Delete",
 
 	// Team stats
 	team_stats_avg_time: "Avg. time / lap",
@@ -360,6 +381,19 @@ export const translations = {
     legal_continue_text: "By continuing, you agree to the",
     legal_continue_follow_up: "and",
     legal_mentions: "Legal notices",
+
+    // Mail verifications
+    mail_await_sign_in: "Signing you in ...",
+    mail_confirmed: "Email confirmed",
+    mail_verified_success: "Your account has been correctly verified.",
+    mail_return_to_app: "You can now go back to the app.",
+    mail_go_to_app_link: "Login",
+    mail_check_email: "Check your email",
+    mail_link_sent: "We've sent a confirmation link to",
+    mail_page_update: "Once you click the link, this page will update automatically.",
+    mail_check_verification: "Checking verification...",
+    mail_sending_email: "Sending...",
+    mail_resend_email: "Resend email",
 
   },
 }

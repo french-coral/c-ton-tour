@@ -13,6 +13,7 @@ import {
     updateRiderStatus, 
     updateQueueByStatus,
     getTeamStats,
+    deleteRider,
 } from "@/lib/queue"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
@@ -20,6 +21,8 @@ import QRCode from "react-qr-code"
 import { useLanguage } from "@/lib/LanguageContext"
 import { useRouteGuard } from "@/lib/useRouteGuard"
 import { useTeam } from "@/lib/TeamContext"
+import { useLongPress } from "@/lib/useLongPress"
+import RiderRow from "@/components/RiderRow"
 
 
 
@@ -61,6 +64,7 @@ export default function TeamPage() {
         }
     )
     const [isStatsOpen, setIsStatsOpen] = useState(true)
+    const [riderToDelete, setRiderToDelete] = useState(null)
 
     useLockBodyScroll(selectedRider !== null)
 
@@ -152,6 +156,18 @@ export default function TeamPage() {
 
         setNewMemberName("")
         setIsAddMemberOpen(false)
+
+        const ridersResult = await getTeamRiders(teamId)
+        if (!ridersResult.error) {
+            setRiders(ridersResult.riders)
+        }
+    }
+
+    async function handleConfirmDeleteRider() {
+        if (!riderToDelete) return
+
+        await deleteRider(riderToDelete.id)
+        setRiderToDelete(null)
 
         const ridersResult = await getTeamRiders(teamId)
         if (!ridersResult.error) {
@@ -496,42 +512,49 @@ export default function TeamPage() {
                 ) : null}
 
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
-            {riders.map(function (rider, index) {
-                return (
-                <button
-                    key={rider.id}
-                    onClick={function () { handleOpenRider(rider) }}
-                    className={
-                    index === 0
-                        ? "w-full flex items-center gap-3 px-4 py-3 text-left"
-                        : "w-full flex items-center gap-3 px-4 py-3 border-t border-gray-100 dark:border-gray-800 text-left"
-                    }
-                >
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center font-medium text-sm flex-shrink-0 overflow-hidden">
-                        {rider.profile?.avatar_url ? (
-                            <img src={rider.profile.avatar_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                            getInitials(rider.name)
-                        )}
-                    </div>
-
-                    <p className="font-medium text-sm flex-1">{rider.name}</p>
-
-                    <div className={"w-7 h-7 rounded-lg flex items-center justify-center text-sm font-medium " + getStatusBadge(rider.status).bg + " " + getStatusBadge(rider.status).text}>
-                        {getStatusBadge(rider.status).label}
-                    </div>
-
-                    {/*{rider.status !== "active" ? (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                        {rider.status === "left" ? "Parti" : "Inactif"}
-                    </span>
-                    ) : null}*/}
-
-                </button>
-                )
-            })}
+                {riders.map(function (rider, index) {
+                    return (
+                        <RiderRow
+                            key={rider.id}
+                            rider={rider}
+                            index={index}
+                            onOpen={handleOpenRider}
+                            onLongPress={function (r) { setRiderToDelete(r) }}
+                        />
+                    )
+                })}
             </div>
+            {riderToDelete ? (
+                <div
+                    className="fixed inset-0 bg-black/40 flex items-center justify-center p-5 z-50"
+                    onClick={function () { setRiderToDelete(null) }}
+                >
+                    <div
+                        className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+                        onClick={function (e) { e.stopPropagation() }}
+                    >
+                        <p className="font-medium text-lg mb-2">{t("team_delete_rider_title")}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            {t("team_delete_rider_warning")} <span className="font-medium text-gray-900 dark:text-white">{riderToDelete.name}</span>
+                        </p>
 
+                        <div className="flex gap-2">
+                            <button
+                                onClick={function () { setRiderToDelete(null) }}
+                                className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm"
+                            >
+                                {t("main_cancel")}
+                            </button>
+                            <button
+                                onClick={handleConfirmDeleteRider}
+                                className="flex-1 bg-transparent border border-red-400 dark:border-red-600 rounded-xl py-2 text-sm font-medium text-red-500 dark:text-red-400"
+                            >
+                                {t("team_delete_rider_confirm")}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
             {selectedRider ? (
             <RiderDetailPopup
                 rider={selectedRider}

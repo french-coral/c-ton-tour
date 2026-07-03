@@ -4,7 +4,6 @@ import { supabase } from "@/lib/supabase"
 // Simple user sign up
 export async function signUp(email, password, username) {
 
-    console.log("Gate 0")
 
     const { data, error } = await supabase.auth.signUp({
         email,
@@ -12,11 +11,11 @@ export async function signUp(email, password, username) {
         options: {
             data: {
                 username: username
-            }
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+
         }
     })
-    
-    console.log("Gate 1")
     return { error }
     
 }
@@ -195,4 +194,33 @@ export async function getTeamJoinCode(teamId) {
 export async function logout() {
     const { error } = await supabase.auth.signOut()
     return { error }
+}
+
+// Leave team
+export async function leaveTeam() {
+    const userResult = await supabase.auth.getUser()
+
+    if (userResult.error || !userResult.data.user) {
+        return { error: { message: 'Not logged in' } }
+    }
+
+    const userId = userResult.data.user.id
+
+    // Unlink the rider slot so it becomes claimable again
+    const unlinkResult = await supabase
+        .from('team_riders')
+        .update({ profile_id: null })
+        .eq('profile_id', userId)
+
+    if (unlinkResult.error) {
+        return { error: unlinkResult.error }
+    }
+
+    // Remove the membership so RLS write access is revoked
+    const membershipResult = await supabase
+        .from('team_memberships')
+        .delete()
+        .eq('user_id', userId)
+
+    return { error: membershipResult.error }
 }

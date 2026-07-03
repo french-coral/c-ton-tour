@@ -816,3 +816,14 @@ export async function updateLapTime(lapId, newTimeSeconds) {
 
     return { error: updateResult.error }
 }
+
+// Delete rider from team, only unlinked riders
+export async function deleteRider(teamRiderId) {
+    const deleteResult = await supabase
+        .from('team_riders')
+        .delete()
+        .eq('id', teamRiderId)
+        .is('profile_id', null)
+
+    return { error: deleteResult.error }
+}

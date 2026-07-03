@@ -10,7 +10,7 @@ import {
 } from "@/lib/profile"
 import { useLanguage } from "@/lib/LanguageContext"
 import { useRouteGuard } from "@/lib/useRouteGuard"
-import { logout } from "@/lib/auth"
+import { logout, leaveTeam } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { Settings } from "lucide-react"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
@@ -117,6 +117,17 @@ export default function ProfilePage() {
     async function handleLogout() {
         await logout()
         window.location.href = "/login"
+    }
+
+    async function handleLeaveTeam() {
+        const result = await leaveTeam()
+
+        if (result.error) {
+            console.error(result.error)
+            return
+        }
+
+        window.location.href = "/team-setup"
     }
 
 // Account deletion
@@ -302,6 +313,19 @@ export default function ProfilePage() {
                                 >
                                     {t("profile_logout")}
                                 </button>
+
+{/* Leave Team */}
+                                {teamRider ? (
+                                    <button
+                                        onClick={function () {
+                                        setIsSettingsOpen(false)
+                                        handleLeaveTeam()
+                                        }}
+                                        className="w-full bg-transparent border border-orange-400 dark:border-orange-600 rounded-xl py-3 text-sm font-medium text-orange-500 dark:text-orange-400"
+                                    >
+                                        {t("profile_leave_team")}
+                                    </button>
+                                    ) : null}
 
 {/* Delete account */}
                                 <button

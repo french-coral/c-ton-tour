@@ -27,12 +27,18 @@ export default function SignUp() {
         e.preventDefault()
         setErrorMsg(null)
 
+        // Validate username is not empty or just whitespace
+        if (!username.trim()) {
+            setErrorMsg(t("signup_username_required"))
+            return
+        }
+
         if (password !== confirmPassword) {
             setErrorMsg(t("signup_passwords_dont_match"))
             return
         }
 
-        const { error } = await signUp(email, password, username)
+        const { error } = await signUp(email, password, username.trim())
 
         if (error) {
             setErrorMsg(error.message)
@@ -41,7 +47,7 @@ export default function SignUp() {
             if (pendingCode) {
                 window.location.href = "/team-setup?code=" + pendingCode
             } else {
-                window.location.href = "/team-setup"
+                window.location.href = `/verify-email?email=${encodeURIComponent(email)}`
             }
         }
     }
