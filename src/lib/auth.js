@@ -3,14 +3,22 @@ import { supabase } from "@/lib/supabase"
 
 // Simple user sign up
 export async function signUp(email, password, username) {
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    if (error) return { error }
 
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({ id: data.user.id, username })
+    console.log("Gate 0")
 
-    return { error: profileError }
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                username: username
+            }
+        }
+    })
+    
+    console.log("Gate 1")
+    return { error }
+    
 }
 
 

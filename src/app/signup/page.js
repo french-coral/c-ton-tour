@@ -32,9 +32,7 @@ export default function SignUp() {
             return
         }
 
-        console.log("Gate 0")
         const { error } = await signUp(email, password, username)
-        console.log("Gate 1")
 
         if (error) {
             setErrorMsg(error.message)

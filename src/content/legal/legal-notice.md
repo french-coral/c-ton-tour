@@ -1,7 +1,7 @@
 ---
 title: Legal Notice (Mentions Légales)
-version: 1.0
-last_updated: 2026-07-02
+version: 1.1
+last_updated: 2026-07-03
 ---
 
 # Legal Notice (Mentions Légales)
@@ -89,13 +89,10 @@ Users may exercise their rights (access, deletion, correction, etc.) by contacti
 
 ## 6. Liability
 
-The publisher makes every effort to ensure the accuracy and availability of the Service. However, no guarantee is given regarding:
+The Service is provided "as is" without any guarantee of uninterrupted availability or absence of errors.
 
-- Continuous availability of the Service
-- Absence of errors or bugs
-- Compatibility with all devices or systems
+The publisher's liability is limited as described in the Terms of Use.
 
-The Service is provided "as is".
 
 ---
 

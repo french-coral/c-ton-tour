@@ -1,7 +1,7 @@
 ---
 title: Terms of Use
-version: 1.0
-last_updated: 2026-07-02
+version: 1.1
+last_updated: 2026-07-03
 ---
 
 # Terms of Use
@@ -149,19 +149,56 @@ Users may terminate their account at any time by deleting it.
 
 ---
 
-## 10. Limitation of Liability
+## 10. Disclaimer of Warranties
 
-To the maximum extent permitted by law:
+The Service is provided on an "as is" and "as available" basis, without warranties of any kind, whether express or implied.
 
-- We are not liable for indirect, incidental, or consequential damages
-- We are not responsible for data loss, service interruptions, or unauthorized access
-- Use of the Service is at your own risk
+While reasonable efforts are made to ensure the accuracy, availability, and reliability of the Service, the Service Provider does not guarantee that the Service will be:
 
-Nothing in these Terms excludes liability where it cannot legally be excluded under French law.
+- uninterrupted;
+- error-free;
+- free from defects;
+- accurate, complete, or up to date at all times.
+
+The Service is intended solely as a tool to assist with the organization of relay events. Users remain solely responsible for verifying all information before, during, and after an event. The Service must not be relied upon as the sole source of information for decisions affecting participant safety, event operations, or competition results.
 
 ---
 
-## 11. Changes to the Terms
+## 11. Limitation of Liability
+
+To the fullest extent permitted by applicable law, the Service Provider shall not be liable for any direct, indirect, incidental, consequential, special, exemplary, or punitive damages arising out of or relating to:
+
+- the use of or inability to use the Service;
+- software bugs, errors, inaccuracies, or interruptions;
+- incorrect calculations, schedules, relay assignments, timings, or displayed information;
+- loss, corruption, or unavailability of data;
+- sporting events, training sessions, competitions, or any related activities organized using the Service;
+- personal injury, property damage, financial loss, or any other damages resulting from the use of the Service.
+
+Users acknowledge that organizing and participating in sporting activities inherently involves risks. The Service does not replace appropriate planning, supervision, safety procedures, official timing systems, or the exercise of reasonable judgment.
+
+Nothing in these Terms excludes or limits liability where such exclusion or limitation is prohibited by applicable law.
+
+---
+
+## 12. User Responsibility
+
+C-Ton-Tour is intended solely as a relay organization and management tool.
+
+Users are solely responsible for:
+
+- verifying all relay information before an event;
+- ensuring participant safety;
+- complying with applicable laws, regulations, and event rules;
+- making all operational decisions during sporting events.
+
+The Service does not replace human judgment, official timing systems, safety procedures, or event management protocols.
+
+The Service is provided free of charge. Users acknowledge that no service-level agreement (SLA), uptime guarantee, or support obligation is provided.
+
+---
+
+## 13. Changes to the Terms
 
 We may update these Terms at any time.
 
@@ -174,7 +211,7 @@ Continued use of the Service after changes constitutes acceptance of the updated
 
 ---
 
-## 12. Governing Law
+## 14. Governing Law
 
 These Terms are governed by the laws of France.
 
@@ -182,7 +219,7 @@ Any disputes arising from the use of the Service will be subject to the jurisdic
 
 ---
 
-## 13. Contact
+## 15. Contact
 
 For any questions regarding these Terms, you may contact:
 
