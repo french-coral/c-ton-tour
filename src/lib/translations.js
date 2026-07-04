@@ -29,12 +29,18 @@ export const translations = {
     login_reset_button: "Envoyer le lien",
     login_reset_sent: "Un lien de réinitialisation a été envoyé à ton email.",
     login_back: "Retour à la connexion",
+
+    // Recovery password
     reset_loading: "Chargement...",
     reset_title: "Nouveau mot de passe",
     reset_new_password: "Nouveau mot de passe",
     reset_confirm_password: "Confirme le mot de passe",
     reset_button: "Mettre à jour",
     reset_success: "Mot de passe mis à jour, redirection...",
+    reset_not_loading: "Problème de chargement ?",
+    reset_not_loading: "Problem loading?",
+    reset_login_back: "Retour à la page de login",
+    reset_link_expired_or_invalid: "Le lien a expiré, est invalide ou a déjà été utilisé.",
 
 
     // Main team page
@@ -249,12 +255,17 @@ export const translations = {
     login_reset_button: "Send reset link",
     login_reset_sent: "A reset link has been sent to your email.",
     login_back: "Back to login",
+
+    // Password recovery
     reset_loading: "Loading...",
     reset_title: "New password",
     reset_new_password: "New password",
     reset_confirm_password: "Confirm password",
     reset_button: "Update password",
     reset_success: "Password updated, redirecting...",
+    reset_not_loading: "Problem loading?",
+    reset_login_back: "Back to login page",
+    reset_link_expired_or_invalid: "The link has expired, is invalid, or has already been used.",
 
     // Main team page
     main_loading: "Loading...",

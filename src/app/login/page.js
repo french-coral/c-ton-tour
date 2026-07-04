@@ -148,7 +148,7 @@ export default function Login() {
                                 value={password}
                                 onChange={function (e) { setPassword(e.target.value) }}
                                 // Le type bascule entre "password" (points caches) et "" selon le bouton oeil
-                                type={passwordVisibility ? "password" : "" }
+                                type={!passwordVisibility ? "password" : "" }
                                 autoComplete="new-password"
                                 className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1 bg-transparent"
                             />
@@ -159,7 +159,7 @@ export default function Login() {
                                 title={t("login_show_hide_password")}
                                 onClick={ () => changePasswordVisibility()}
                             >
-                                {passwordVisibility ? 
+                                {!passwordVisibility ? 
                                     <EyeClosed className="w-5 h-5" /> :
                                     <Eye className="w-5 h-5" />
                                 }

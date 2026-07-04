@@ -20,7 +20,7 @@ export default function SignUp() {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [username, setUsername] = useState("")
-    const [passwordVisibility, setPasswordVisibility] = useState("false")
+    const [passwordVisibility, setPasswordVisibility] = useState(false)
     const [errorMsg, setErrorMsg] = useState(null)
 
     async function handleSubmit(e) {
@@ -117,17 +117,18 @@ export default function SignUp() {
                         <input
                             value={password}
                             onChange={function (e) { setPassword(e.target.value) }}
-                            type={passwordVisibility ? "password" : "" }
+                            type={!passwordVisibility ? "password" : "" }
                             autoComplete="new-password"
                             className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1 bg-transparent"
                         />
                         
                         <button 
+                            type="button"
                             className="absolute right-3 bottom-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                             title={t("signup_show_hide_password")}
                             onClick={ () => changePasswordVisibility()}
                         >
-                            {passwordVisibility ? 
+                            {!passwordVisibility ? 
                                 <EyeClosed className="w-5 h-5" /> :
                                 <Eye className="w-5 h-5" />
                             }
@@ -142,7 +143,7 @@ export default function SignUp() {
                         <input
                             value={confirmPassword}
                             onChange={function (e) { setConfirmPassword(e.target.value) }}
-                            type={passwordVisibility ? "password" : "" }
+                            type={!passwordVisibility ? "password" : "" }
                             autoComplete="new-password"
                             className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1 bg-transparent"
                         />
@@ -151,7 +152,7 @@ export default function SignUp() {
                             title={t("signup_show_hide_password")}
                             onClick={ () => changePasswordVisibility()}
                         >
-                            {passwordVisibility ? 
+                            {!passwordVisibility ? 
                                 <EyeClosed className="w-5 h-5" /> :
                                 <Eye className="w-5 h-5" />
                             }
