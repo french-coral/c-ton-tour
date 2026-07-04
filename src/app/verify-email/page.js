@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/LanguageContext"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
-export default function VerifyEmail() {
+function VerifyEmailInner() {
     const searchParams = useSearchParams();
     const email = searchParams.get("email");
 
@@ -85,4 +85,16 @@ export default function VerifyEmail() {
             </div>
         </div>
     );
+}
+
+export default function VerifyEmail() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950">
+                <div className="animate-pulse text-gray-500">Loading...</div>
+            </div>
+        }>
+            <VerifyEmailInner />
+        </Suspense>
+    )
 }
