@@ -1,5 +1,10 @@
 export const translations = {
   fr: {
+
+    // Onboardings
+    onboarding_main: "Construis ta première rotation dans la file d'attente. Lance l'événement quand tu es prêt. Utilise Ajouter un relai pour enregistrer chaque passage — par défaut le temps est il y a 1 minute du moment ou tu a ouvert le menu, ajuste si besoin.",
+    onboarding_team_list: "Ici tu peux voir les stats de chaque rider et gérer l'équipe. Tu peux ajouter des riders, puis les membres entrant pourront s'associer à ses riders",
+    
     // Signup page
     signup_passwords_dont_match: "Les mots de passe ne correspondent pas",
     signup_username_label: "Pseudo",
@@ -20,6 +25,16 @@ export const translations = {
     login_no_account: "Pas encore de compte ?",
     login_signup_link: "S'inscrire",
     login_show_hide_password: "Afficher/Masquer le mot de passe",
+    login_forgot_password: "Mot de passe oublié ?",
+    login_reset_button: "Envoyer le lien",
+    login_reset_sent: "Un lien de réinitialisation a été envoyé à ton email.",
+    login_back: "Retour à la connexion",
+    reset_loading: "Chargement...",
+    reset_title: "Nouveau mot de passe",
+    reset_new_password: "Nouveau mot de passe",
+    reset_confirm_password: "Confirme le mot de passe",
+    reset_button: "Mettre à jour",
+    reset_success: "Mot de passe mis à jour, redirection...",
 
 
     // Main team page
@@ -60,6 +75,11 @@ export const translations = {
     main_tour_plural: "tours",
     main_planned_singular: "prévu",
     main_planned_plural: "prévus",
+    main_start_event: "Démarrer l'événement",
+    main_start_event_confirm: "C'est parti !",
+    main_first_rider: "Premier coureur",
+    main_first_rider_label: "Premier coureur",
+    main_add_relay: "Ajouter un relai",
 
     // Rider popup
     rider_close: "Fermer",
@@ -200,6 +220,11 @@ export const translations = {
   },
 
   en: {
+
+    // Onboardings
+    onboarding_main: "Build your first rotation in the queue. Start the event when you're ready. Use Add Relay to log each handoff — default time is 1 minute ago, adjust if needed.",
+    onboarding_team_list: "Here you can see each rider's stats and manage the team. You can add riders that incoming members can link to.",
+    
     // Signup page
     signup_passwords_dont_match: "Passwords do not match",
     signup_username_label: "Username",
@@ -220,6 +245,16 @@ export const translations = {
     login_no_account: "Don't have an account yet?",
     login_signup_link: "Sign up",
     login_show_hide_password: "Show/Hide password",
+    login_forgot_password: "Forgot password?",
+    login_reset_button: "Send reset link",
+    login_reset_sent: "A reset link has been sent to your email.",
+    login_back: "Back to login",
+    reset_loading: "Loading...",
+    reset_title: "New password",
+    reset_new_password: "New password",
+    reset_confirm_password: "Confirm password",
+    reset_button: "Update password",
+    reset_success: "Password updated, redirecting...",
 
     // Main team page
     main_loading: "Loading...",
@@ -259,6 +294,11 @@ export const translations = {
     main_tour_plural: "laps",
     main_planned_singular: "planned",
     main_planned_plural: "planned",
+    main_start_event: "Start the event",
+    main_start_event_confirm: "Let's go!",
+    main_first_rider: "First rider",
+    main_first_rider_label: "First rider",
+    main_add_relay: "Add relay",
 
     // Rider popup
     rider_close: "Close",

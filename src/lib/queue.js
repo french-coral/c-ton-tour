@@ -827,3 +827,31 @@ export async function deleteRider(teamRiderId) {
 
     return { error: deleteResult.error }
 }
+
+// Event start and stop
+export async function startEvent(teamId, firstRiderId, lapCount) {
+    const updateResult = await supabase
+        .from('teams')
+        .update({
+            event_started: true,
+            current_rider_id: firstRiderId,
+            current_leg_started_at: new Date().toISOString(),
+            current_leg_lap_count: lapCount,
+        })
+        .eq('id', teamId)
+
+    return { error: updateResult.error }
+}
+
+export async function stopEvent(teamId) {
+    const updateResult = await supabase
+        .from('teams')
+        .update({
+            event_started: false,
+            current_rider_id: null,
+            current_leg_started_at: null,
+        })
+        .eq('id', teamId)
+
+    return { error: updateResult.error }
+}

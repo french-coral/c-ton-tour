@@ -25,6 +25,7 @@ import {
   emptyQueue,
   updateLapTime,
   updateQueueByStatus,
+  startEvent,
 } from "@/lib/queue"
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
@@ -35,6 +36,8 @@ import QueueItem from "@/components/QueueItem"
 import { useLanguage } from "@/lib/LanguageContext"
 import { useRouteGuard } from "@/lib/useRouteGuard"
 import { useTeam } from "@/lib/TeamContext"
+import { useOnboarding } from "@/lib/useOnboarding"
+import OnboardingPopup from "@/components/OnboardingPopup"
 
 
 
@@ -65,6 +68,14 @@ export default function MainPage() {
 	const [riderToAdd, setRiderToAdd] = useState("")
 	const [lapCountToAdd, setLapCountToAdd] = useState(1)
 	const [isReplenishing, setIsReplenishing] = useState(false)
+
+	// Event start and stop
+	const [isStartEventOpen, setIsStartEventOpen] = useState(false)
+	const [startRiderId, setStartRiderId] = useState("")
+	const [startLapCount, setStartLapCount] = useState(1)
+
+	// Onboarding
+	const { shouldShow, dismiss } = useOnboarding("main")
 
 	// Current rider editing
 	const [isEditingCurrentRider, setIsEditingCurrentRider] = useState(false)
@@ -678,9 +689,78 @@ export default function MainPage() {
 						/>
 				</div>
 			</div>
+{/* Start event onboarding */}
+			{isStartEventOpen ? (
+				<div
+					className="fixed inset-0 bg-black/40 flex items-center justify-center p-5"
+					onClick={function () { setIsStartEventOpen(false) }}
+				>
+					<div
+						className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+						onClick={function (e) { e.stopPropagation() }}
+					>
+						<div className="flex items-center justify-between mb-4">
+							<p className="font-medium text-lg">{t("main_start_event")}</p>
+							<button onClick={function () { setIsStartEventOpen(false) }} className="text-gray-400 text-xl px-1">✕</button>
+						</div>
 
+						<div className="flex flex-col gap-3">
+							<div>
+								<label className="text-sm text-gray-500 dark:text-gray-400">{t("main_first_rider_label")}</label>
+								<select
+									value={startRiderId}
+									onChange={function (e) { setStartRiderId(e.target.value) }}
+									className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
+								>
+									<option value="">{t("main_choose_rider")}</option>
+									{activeRiders.map(function (rider) {
+										return (
+											<option key={rider.id} value={rider.id}>{rider.name}</option>
+									)
+									})}
+								</select>
+							</div>
+
+							<div>
+								<label className="text-sm text-gray-500 dark:text-gray-400">{t("main_lap_count_label")}</label>
+								<input
+									type="text"
+									inputMode="numeric"
+									pattern="[0-9]*"
+									min="1"
+									value={startLapCount}
+									onChange={function (e) { setStartLapCount(Number(e.target.value)) }}
+									className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1"
+								/>
+							</div>
+
+							<div className="flex gap-2 mt-2">
+								<button
+									onClick={function () { setIsStartEventOpen(false) }}
+									className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm"
+								>
+									{t("main_cancel")}
+								</button>
+								<button
+									onClick={async function () {
+									if (!startRiderId) return
+										await startEvent(team.id, startRiderId, startLapCount)
+										setIsStartEventOpen(false)
+										reloadEverything()
+									}}
+									disabled={!startRiderId}
+									className="flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium disabled:opacity-40"
+								>
+									{t("main_start_event_confirm")}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				) : null}
 
 {/* Current running rider */}
+			{team.event_started ? (
 				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-8">
 					<p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t("main_currently_running")}</p>
 
@@ -767,8 +847,19 @@ export default function MainPage() {
 						<span className="text-xl font-medium ml-auto">{formatSeconds(elapsedSeconds)}</span>
 					</div>
 				</div>
-{/* Next rider in line*/}
+			
+			):(
+				// Pre-event: big start button
+				<button
+					onClick={function () { setIsStartEventOpen(true) }}
+					className="w-full bg-blue-600 text-white rounded-2xl py-6 font-medium text-lg mb-8"
+				>
+{/* Event start button */}						
+					{t("main_start_event")}
+				</button>
+			)}
 				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 mb-8">
+{/* Next rider in line*/}
 					{nextEntry ? (
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center font-medium text-sm flex-shrink-0 overflow-hidden">
@@ -778,21 +869,25 @@ export default function MainPage() {
 									getInitials(nextEntry.riderName)
 								)}
 							</div>
-						<div className="flex-1">
-							<p className="text-sm text-gray-500 dark:text-gray-400">{t("main_next_up")}</p>
-							<p className="font-medium text-sm mt-0.5">{nextEntry.riderName}</p>
-						</div>
-						<div className="text-right">
-							<p className="text-sm text-gray-500 dark:text-gray-400">{t("main_in")}</p>
+							<div className="flex-1">
+								<p className="text-sm text-gray-500 dark:text-gray-400">
+									{team.event_started ? t("main_next_up") : t("main_first_rider")}
+								</p>
+								<p className="font-medium text-sm mt-0.5">{nextEntry.riderName}</p>
+							</div>
+							{team.event_started ? (
+								<div className="text-right">
+									<p className="text-sm text-gray-500 dark:text-gray-400">{t("main_in")}</p>
 {/* Relay blinking text */}
-							{isOverdue ? (
-								<span className="blink-orange text-red-600 dark:text-orange-400 text-xl font-medium ml-auto">
-									{t("main_relay")}
-								</span>
-							) : (
-								<p className="font-medium text-sm mt-0.5">~ {formatSeconds(nextEntry.etaSeconds)}</p>
-						)}
-						</div>
+									{isOverdue ? (
+										<span className="blink-orange text-red-600 dark:text-orange-400 text-xl font-medium ml-auto">
+											{t("main_relay")}
+										</span>
+									) : (
+										<p className="font-medium text-sm mt-0.5">~ {formatSeconds(nextEntry.etaSeconds)}</p>
+								)}
+								</div>
+							) : null}
 						</div>
 					) : (
 						<p className="text-gray-500 dark:text-gray-400">{t("main_queue_empty")}</p>
@@ -1003,9 +1098,10 @@ export default function MainPage() {
 
 				<button
 					onClick={openAddLapPopup}
-					className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2">
+					disabled={!team.event_started}
+					className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2 disabled:opacity-40 disabled:cursor-not-allowed">
 					
-					{t("main_add_time")}
+					{t("main_add_relay")}
 
 				</button>
 {/* Add laps of a given rider popup window*/}
@@ -1198,6 +1294,13 @@ export default function MainPage() {
 					}
 					</div>
 				</div>
+{/* Onboarding */}				
+				{shouldShow ? (
+					<OnboardingPopup
+						message={t("onboarding_main")}
+						onDismiss={dismiss}
+					/>
+				) : null}
 			</div>
 		</div>
 	)

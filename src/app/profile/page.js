@@ -13,6 +13,7 @@ import { useRouteGuard } from "@/lib/useRouteGuard"
 import { logout, leaveTeam } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { Settings } from "lucide-react"
+import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function ProfilePage() {
@@ -39,6 +40,8 @@ export default function ProfilePage() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
     const fileInputRef = useRef(null)
+
+    useLockBodyScroll(isDeleteOpen || isSettingsOpen)
 
 /////////////////////////////////////////////////////////////
 ////	    		   	Base load						////
@@ -420,7 +423,7 @@ export default function ProfilePage() {
 
 {/* Language switcher */}
 
-                <div className="fixed bottom-20 right-4 z-10">
+                <div className="fixed bottom-20 right-4">
                     <LanguageSwitcher />
                 </div>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { login, getMyTeamRider } from "@/lib/auth"
+import { login, getMyTeamRider, resetPassword  } from "@/lib/auth"
 import { useState } from "react"
 import Link from "next/link"
 import { Eye, EyeClosed } from "lucide-react"
@@ -19,8 +19,13 @@ export default function Login() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     // Controle si le mot de passe est cache ("password") ou visible ("text")
-    const [passwordVisibility, setPasswordVisibility] = useState("false")
+    const [passwordVisibility, setPasswordVisibility] = useState(false)
     const [errorMsg, setErrorMsg] = useState(null)
+
+    // Password recovery
+    const [isForgotPassword, setIsForgotPassword] = useState(false)
+    const [resetEmail, setResetEmail] = useState("")
+    const [resetSent, setResetSent] = useState(false)
 
     async function handleSubmit(e) {
         // Empeche le comportement par defaut du form (reload complet de la page)
@@ -51,6 +56,18 @@ export default function Login() {
         }
     }
 
+    async function handleResetPassword(e) {
+        e.preventDefault()
+        setErrorMsg(null)
+
+        const { error } = await resetPassword(resetEmail)
+        if (error) {
+            setErrorMsg(error.message)
+        } else {
+            setResetSent(true)
+        }
+    }
+
     if (isChecking) return null
 
     return (
@@ -77,7 +94,39 @@ export default function Login() {
                             />
                     </div>
                 </div>
-{/* Login form */}
+                {isForgotPassword ? (
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                        {resetSent ? (
+                        <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                            {t("login_reset_sent")}
+                        </p>
+                        ) : (
+                            <form onSubmit={handleResetPassword} className="flex flex-col gap-3">
+                                <div>
+                                    <label className="text-sm text-gray-500 dark:text-gray-400">{t("login_email_label")}</label>
+                                    <input
+                                        type="email"
+                                        inputMode="email"
+                                        value={resetEmail}
+                                        onChange={function (e) { setResetEmail(e.target.value) }}
+                                        autoComplete="off"
+                                        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1 bg-transparent"
+                                    />
+                                </div>
+                                <button type="submit" className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium">
+                                    {t("login_reset_button")}
+                                </button>
+                                {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+                            </form>
+                        )}
+                        <button
+                            onClick={function () { setIsForgotPassword(false); setResetSent(false) }}
+                            className="text-xs text-gray-400 dark:text-gray-500 underline text-center"
+                        >
+                            {t("login_back")}
+                        </button>
+                    </div>
+                    ) : (
                 <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
 {/* Email */}
                     <div>
@@ -104,7 +153,8 @@ export default function Login() {
                                 className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mt-1 bg-transparent"
                             />
 {/* See password input field */}                            
-                            <button 
+                            <button
+                                type="button" 
                                 className="absolute right-3 bottom-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                                 title={t("login_show_hide_password")}
                                 onClick={ () => changePasswordVisibility()}
@@ -123,6 +173,17 @@ export default function Login() {
                     </button>
 
                     {errorMsg ? <p className="text-sm text-red-500 text-center">{errorMsg}</p> : null}
+
+{/* Forgot password */}    
+                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">
+                        <button
+                            type="button"
+                            onClick={function () { setIsForgotPassword(true) }}
+                            className="underline"
+                        >
+                            {t("login_forgot_password")}
+                        </button>
+                    </p>
 {/* Switch to sign up*/}
                     <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
                         {t("login_no_account")}{" "}
@@ -131,6 +192,7 @@ export default function Login() {
                             {t("login_signup_link")}
                         </Link>
                     </p>
+                    
 {/* Legal mentions */}
                     <hr className="border-gray-500 mt-2"></hr>
                     <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
@@ -142,6 +204,7 @@ export default function Login() {
                     </p>
 
                 </form>
+                )}
                 <Link href="/legal" className="underline text-sm text-gray-500 dark:text-gray-400 text-center mt-2 flex justify-center mt-10"> {t("legal_mentions")} </Link>
             </div>
         </div>
