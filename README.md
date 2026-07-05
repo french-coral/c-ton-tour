@@ -3,7 +3,6 @@
 **Real-time relay management app for sport events.**  
 Built for teams who want to track who is running, who is next, and how the event is progressing - all from their phones.
 
----
 
 ## What it does
 
@@ -20,7 +19,6 @@ CTonTour lets a team manage a 24-hour relay (or any relay format) in real time, 
 - **Translated** / French and English, device-language detected, manually switchable
 - **Dark mode** / system-preference aware
 
----
 
 ## Stack
 
@@ -36,7 +34,6 @@ CTonTour lets a team manage a 24-hour relay (or any relay format) in real time, 
 | Icons | [Lucide React](https://lucide.dev) |
 | QR codes | [react-qr-code](https://github.com/rosskhanas/react-qr-code) |
 
----
 
 ## Project structure
 
@@ -84,7 +81,6 @@ supabase/
     delete-account/       # Edge Function for account deletion
 ```
 
----
 
 ## Database schema
 
@@ -99,7 +95,6 @@ run_queue         — ordered queue of upcoming riders
 
 Row Level Security is enabled on all tables. Public read is open (for the public stats page). Write access requires membership via `team_memberships`.
 
----
 
 ## Local setup
 
@@ -176,7 +171,6 @@ supabase functions deploy delete-account
 npm run dev
 ```
 
----
 
 ## Deployment
 
@@ -190,7 +184,6 @@ The app deploys to Vercel automatically on every push to `main`.
 
 Custom domains work out of the box on Vercel — add yours in *Project Settings → Domains* and update your DNS accordingly.
 
----
 
 ## Circuit constants
 
@@ -203,14 +196,12 @@ export const CIRCUIT_ELEVATION_METERS = 33.93 // upward elevation per lap in met
 
 These values are used to calculate speed (km/h), total distance and total elevation for all stats.
 
----
 
 ## Contributing
 
 This is a purpose-built event app. If you want to adapt it for your own relay event, fork it and update the circuit constants.
 If you are completly lost, give this README.md to your favorite LLM, it will know what to do.
 
----
 
 ## License
 
