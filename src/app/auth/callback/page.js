@@ -1,59 +1,84 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 import { useLanguage } from "@/lib/LanguageContext"
 
-
 export default function CallbackPage() {
-
-    const router = useRouter();
+    const router = useRouter()
     const { t } = useLanguage()
 
-    useEffect(() => {
+    useEffect(function () {
         async function handleAuth() {
             try {
-                // First try to get session directly (important for implicit flow)
-                const { data: sessionData } = await supabase.auth.getSession();
+                // Read the type from URL params — tells us why we're here
+                const urlParams = new URLSearchParams(window.location.search)
+                const flowType = urlParams.get("type")
+
+                // First try existing session (implicit flow)
+                const { data: sessionData } = await supabase.auth.getSession()
 
                 if (sessionData?.session) {
-                    router.replace("/email-confirmed");
-                    return;
+                    if (flowType === "recovery") {
+                        router.replace("/reset-password")
+                        return
+                    }
+
+                    // Check for pending join code before redirecting
+                    const pendingJoinCode = sessionStorage.getItem("pendingJoinCode")
+                    if (pendingJoinCode) {
+                        router.replace("/team-setup?code=" + pendingJoinCode)
+                        return
+                    }
+
+                    router.replace("/email-confirmed")
+                    return
                 }
 
-                // Fallback: exchange code (PKCE flow)
+                // Fallback: PKCE code exchange
                 const { error } = await supabase.auth.exchangeCodeForSession(
                     window.location.href
-                );
+                )
 
                 if (error) {
-                    console.error("Auth exchange error:", error);
-                    router.replace("/login");
-                    return;
+                    console.error("Auth exchange error:", error)
+                    router.replace("/login")
+                    return
                 }
 
                 // Re-check session after exchange
-                const { data: finalSession } = await supabase.auth.getSession();
+                const { data: finalSession } = await supabase.auth.getSession()
 
                 if (finalSession?.session) {
-                    router.replace("/email-confirmed");
+                    if (flowType === "recovery") {
+                        router.replace("/reset-password")
+                        return
+                    }
+
+                    const pendingJoinCode = sessionStorage.getItem("pendingJoinCode")
+                    if (pendingJoinCode) {
+                        router.replace("/team-setup?code=" + pendingJoinCode)
+                        return
+                    }
+
+                    router.replace("/email-confirmed")
                 } else {
-                    router.replace("/login");
+                    router.replace("/login")
                 }
 
             } catch (err) {
-                console.error("Callback error:", err);
-                router.replace("/login");
+                console.error("Callback error:", err)
+                router.replace("/login")
             }
         }
 
-        handleAuth();
-    }, [router]);
+        handleAuth()
+    }, [router])
 
     return (
         <div className="min-h-screen flex items-center justify-center">
             <p>{t("mail_await_sign_in")}</p>
         </div>
-    );
+    )
 }

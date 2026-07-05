@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { getTeamJoinCode,addPlaceholderRider } from "@/lib/auth"
 import { 
@@ -15,7 +15,8 @@ import {
     pauseEvent, 
     resetEvent, 
     resetRiderStats, 
-    exportTeamStats
+    exportTeamStats,
+    importLapsFromCSV,
 } from "@/lib/queue"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
@@ -74,6 +75,11 @@ export default function TeamPage() {
     const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
     const [isResetStatsOpen, setIsResetStatsOpen] = useState(false)
     const [selectedRiderForReset, setSelectedRiderForReset] = useState("all")
+    const [isPauseConfirmOpen, setIsPauseConfirmOpen] = useState(false)
+    const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false)
+
+    const [importResult, setImportResult] = useState(null)
+    const fileImportRef = useRef(null)
 
     useLockBodyScroll(selectedRider !== null)
 
@@ -357,6 +363,20 @@ export default function TeamPage() {
         reloadData()
     }
 
+    async function handlePauseEvent() {
+        await pauseEvent(teamId)
+        setIsPauseConfirmOpen(false)
+        setIsEventMenuOpen(false)
+        reloadData()
+    }
+
+    async function handleStopEvent() {
+        await stopEvent(teamId)
+        setIsStopConfirmOpen(false)
+        setIsEventMenuOpen(false)
+        reloadData()
+    }
+
     async function handleResetStats() {
         if (selectedRiderForReset === "all") {
                 for (const rider of riders) {
@@ -402,6 +422,41 @@ export default function TeamPage() {
         link.download = "ctontour_stats.csv"
         link.click()
         URL.revokeObjectURL(url)
+    }
+
+    async function handleImportCSV(e) {
+        const file = e.target.files[0]
+        if (!file) return
+
+        const text = await file.text()
+        const lines = text.trim().split("\n")
+
+        if (lines.length < 2) {
+            setImportResult({ error: "Empty file", imported: 0, skipped: 0 })
+            return
+        }
+
+        // Parse headers from first line
+        const headers = lines[0].split(",").map(function (h) { return h.trim() })
+
+        // Parse each data row into an object keyed by header
+        const parsedRows = []
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(",")
+            const row = {}
+            headers.forEach(function (header, index) {
+                row[header] = (values[index] || "").trim()
+            })
+            parsedRows.push(row)
+        }
+
+        const result = await importLapsFromCSV(teamId, parsedRows)
+        setImportResult(result)
+        e.target.value = ""
+
+        if (!result.error) {
+            reloadData()
+        }
     }
 
     function reloadData() {
@@ -688,14 +743,14 @@ export default function TeamPage() {
                     <div className="flex flex-col gap-2">
 
                         <button
-                            onClick={handleStopEvent}
+                            onClick={function () { setIsStopConfirmOpen(true) }}
                             className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
                         >
                             {t("team_stop_event")}
                         </button>
 
                         <button
-                            onClick={handlePauseEvent}
+                            onClick={function () { setIsPauseConfirmOpen(true) }}
                             className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
                         >
                             {t("team_pause_event")}
@@ -722,9 +777,37 @@ export default function TeamPage() {
                             {t("team_reset_event")}
                         </button>
 
+                        <button
+                            onClick={function () { fileImportRef.current.click() }}
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
+                        >
+                            {t("team_import_csv")}
+                        </button>
+
+                        <input
+                            ref={fileImportRef}
+                            type="file"
+                            accept=".csv"
+                            onChange={handleImportCSV}
+                            className="hidden"
+                        />
+
                     </div>
                 </div>
             </div>
+            ) : null}
+
+            {importResult ? (
+                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-xs text-gray-500 dark:text-gray-400">
+                    {importResult.error ? (
+                    <p className="text-red-500">{t("team_import_error")}</p>
+                    ) : (
+                    <p>{t("team_import_success")
+                        .replace("{imported}", importResult.imported)
+                        .replace("{skipped}", importResult.skipped)}
+                    </p>
+                    )}
+                </div>
             ) : null}
 
             {isResetConfirmOpen ? (
@@ -799,6 +882,68 @@ export default function TeamPage() {
                 </div>
             </div>
             ) : null}
+
+            {isPauseConfirmOpen ? (
+                <div
+                    className="fixed inset-0 bg-black/40 flex items-center justify-center p-5 z-50"
+                    onClick={function () { setIsPauseConfirmOpen(false) }}
+                >
+                    <div
+                        className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+                        onClick={function (e) { e.stopPropagation() }}
+                    >
+                        <p className="font-medium text-lg mb-2">{t("team_pause_event")}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            {t("team_pause_event_warning")}
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={function () { setIsPauseConfirmOpen(false) }}
+                                className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm"
+                            >
+                                {t("main_cancel")}
+                            </button>
+                            <button
+                                onClick={handlePauseEvent}
+                                className="flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium"
+                            >
+                                {t("team_pause_event_confirm")}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                ) : null}
+
+            {isStopConfirmOpen ? (
+                <div
+                    className="fixed inset-0 bg-black/40 flex items-center justify-center p-5 z-50"
+                    onClick={function () { setIsStopConfirmOpen(false) }}
+                >
+                    <div
+                        className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+                        onClick={function (e) { e.stopPropagation() }}
+                    >
+                        <p className="font-medium text-lg mb-2">{t("team_stop_event")}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            {t("team_stop_event_warning")}
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={function () { setIsStopConfirmOpen(false) }}
+                                className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm"
+                            >
+                                {t("main_cancel")}
+                            </button>
+                            <button
+                                onClick={handleStopEvent}
+                                className="flex-1 border border-orange-400 dark:border-orange-600 rounded-xl py-2 text-sm font-medium text-orange-500"
+                            >
+                                {t("team_stop_event_confirm")}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                ) : null}
 
 {/* Onboarding */}
             {shouldShow ? (

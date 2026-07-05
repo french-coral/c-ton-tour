@@ -155,7 +155,11 @@ export const translations = {
     team_delete_rider_confirm: "Supprimer",
     team_event_menu: "Gestion de l'événement",
     team_stop_event: "Finir l'événement",
+    team_stop_event_warning: "L'événement sera arrêté. Les stats sont conservées, tu pourras le relancer à tout moment.",
+    team_stop_event_confirm: "Arrêter",
     team_pause_event: "Mettre en pause le timer",
+    team_pause_event_warning: "Le coureur actuel sera retiré. Tu devras relancer manuellement le prochain relai.",
+    team_pause_event_confirm: "Mettre en pause",
     team_reset_stats: "Réinitialiser les stats",
     team_reset_all_riders: "Tous les riders",
     team_reset_stats_confirm: "Réinitialiser",
@@ -163,6 +167,9 @@ export const translations = {
     team_reset_event_warning: "Cette action supprimera définitivement tous les temps et relais enregistrés.",
     team_reset_event_confirm: "Tout supprimer",
     team_export_csv: "Exporter les stats (CSV)",
+    team_import_csv: "Importer des stats (CSV)",
+    team_import_error: "Erreur lors de l'import. Vérifie le format du fichier.",
+    team_import_success: "{imported} relai(s) importé(s), {skipped} ignoré(s).",
 
 	// Team stats
 	team_stats_avg_time: "Temps moy. / tour",
@@ -234,6 +241,52 @@ export const translations = {
     mail_check_verification: "Vérification en cours...",
     mail_sending_email: "Envoi en cours...",
     mail_resend_email: "Renvoyer l'e-mail",
+
+    // Guide Q&A
+    guide_title: "Guide",
+    guide_section_getting_started: "Démarrage",
+    guide_section_relay: "Relais",
+    guide_section_queue: "File d'attente",
+    guide_section_stats: "Statistiques",
+
+    guide_q_what_is_this: "C'est quoi cette appli ?",
+    guide_a_what_is_this: "CTonTour est une app de gestion de relais en temps réel. Elle permet à toute ton équipe de suivre qui court, qui vient ensuite, et de consulter les stats de chaque rider.",
+
+    guide_q_how_to_start: "Comment démarrer l'événement ?",
+    guide_a_how_to_start: "Depuis la page principale, remplis d'abord la file d'attente avec au moins un coureur, puis appuie sur Démarrer l'événement. Tu sélectionnes le premier coureur et le tour démarre.",
+
+    guide_q_add_member: "Comment ajouter un membre à l'équipe ?",
+    guide_a_add_member: "Dans l'onglet Équipe, appuie sur + Ajouter un membre. Tu peux soit inviter quelqu'un avec un code ou un QR code, soit créer une fiche rider sans compte pour un participant qui ne veut pas s'inscrire.",
+
+    guide_q_how_relay_works: "Comment fonctionne un relai ?",
+    guide_a_how_relay_works: "Quand un coureur finit son tour, appuie sur Ajouter un relai. Tu indiques le nombre de tours effectués et l'heure de fin. L'appli enregistre le temps et passe automatiquement au coureur suivant dans la file.",
+
+    guide_q_how_time_calculated: "Comment les temps sont-ils calculés ?",
+    guide_a_how_time_calculated: "Le temps d'un relai est calculé entre l'heure de début du leg actuel (l'heure de fin du relai précédent) et l'heure de fin que tu entres. Par défaut, l'heure de fin est il y a 1 minute — ajuste-la au moment exact du passage si possible.",
+
+    guide_q_wrong_runner: "Le mauvais coureur est affiché. Que faire ?",
+    guide_a_wrong_runner: "Appuie sur l'icône ✎ à côté du coureur actuel. Tu peux changer qui court et le nombre de tours prévus sans remettre à zéro le chrono en cours.",
+
+    guide_q_queue_empty: "La file est vide et plus personne ne court. Comment continuer ?",
+    guide_a_queue_empty: "Ajoute des coureurs dans la file d'attente via le bouton Voir la file d'attente, puis appuie sur Démarrer un relai pour relancer.",
+
+    guide_q_queue_order: "Comment fonctionne l'ordre de la file ?",
+    guide_a_queue_order: "La file est entièrement personnalisable. Tu peux glisser-déposer les riders pour changer leur ordre, modifier leur nombre de tours, en supprimer ou en ajouter à tout moment. Le remplissage automatique suit l'ordre de ceux qui ont couru le moins récemment.",
+
+    guide_q_autofill: "C'est quoi le remplissage automatique ?",
+    guide_a_autofill: "Quand il est activé, la file se remplit automatiquement après chaque relai pour maintenir un nombre minimum de coureurs en attente. L'ordre est basé sur qui a couru le plus tôt — celui qui attend depuis le plus longtemps passe en premier.",
+
+    guide_q_change_laps: "Je peux modifier le nombre de tours d'un coureur dans la file ?",
+    guide_a_change_laps: "Oui. Dans la file d'attente, chaque ligne a un champ numérique directement modifiable pour ajuster les tours prévus.",
+
+    guide_q_where_stats: "Où voir les stats d'un rider ?",
+    guide_a_where_stats: "Dans l'onglet Équipe, appuie sur n'importe quel rider pour ouvrir sa fiche. Tu verras son temps moyen par tour, sa vitesse moyenne, la distance totale, le dénivelé et l'historique de ses relais.",
+
+    guide_q_export: "Comment exporter les stats ?",
+    guide_a_export: "Dans l'onglet Équipe, appuie sur Gestion de l'événement puis Exporter les stats (CSV). Le fichier téléchargé peut être ouvert dans Excel, Numbers ou Google Sheets.",
+
+    guide_q_reset: "Comment remettre les stats à zéro ?",
+    guide_a_reset: "Dans l'onglet Équipe → Gestion de l'événement → Réinitialiser les stats. Tu peux choisir de remettre à zéro un rider spécifique ou toute l'équipe. Attention, c'est irréversible.",
 
   },
 
@@ -390,7 +443,11 @@ export const translations = {
     team_delete_rider_confirm: "Delete",
     team_event_menu: "Event management",
     team_stop_event: "End the event",
+    team_stop_event_warning: "The event will be stopped. Stats are kept, you can restart it anytime.",
+    team_stop_event_confirm: "Stop",
     team_pause_event: "Pause the timer",
+    team_pause_event_warning: "The current runner will be removed. You will need to manually start the next relay.",
+    team_pause_event_confirm: "Pause",
     team_reset_stats: "Reset stats",
     team_reset_all_riders: "All riders",
     team_reset_stats_confirm: "Reset",
@@ -398,6 +455,9 @@ export const translations = {
     team_reset_event_warning: "This will permanently delete all recorded times and relays.",
     team_reset_event_confirm: "Delete everything",
     team_export_csv: "Export stats (CSV)",
+    team_import_csv: "Import stats (CSV)",
+    team_import_error: "Import failed. Check the file format.",
+    team_import_success: "{imported} relay(s) imported, {skipped} skipped.",
 
 	// Team stats
 	team_stats_avg_time: "Avg. time / lap",
@@ -469,6 +529,52 @@ export const translations = {
     mail_check_verification: "Checking verification...",
     mail_sending_email: "Sending...",
     mail_resend_email: "Resend email",
+    
+    // Guide Q&A
+    guide_title: "Guide",
+    guide_section_getting_started: "Getting started",
+    guide_section_relay: "Relay",
+    guide_section_queue: "Queue",
+    guide_section_stats: "Statistics",
+
+    guide_q_what_is_this: "What is this app?",
+    guide_a_what_is_this: "CTonTour is a real-time relay management app. It lets your whole team track who is running, who is next, and view each rider's stats.",
+
+    guide_q_how_to_start: "How do I start the event?",
+    guide_a_how_to_start: "From the main page, fill the queue with at least one rider first, then tap Start the event. Select the first rider and the clock starts.",
+
+    guide_q_add_member: "How do I add a team member?",
+    guide_a_add_member: "In the Team tab, tap + Add a member. You can invite someone with a code or QR code, or create a rider profile without an account for a participant who does not want to sign up.",
+
+    guide_q_how_relay_works: "How does a relay work?",
+    guide_a_how_relay_works: "When a rider finishes their leg, tap Add relay. Enter the number of laps done and the finish time. The app records the time and automatically moves to the next rider in the queue.",
+
+    guide_q_how_time_calculated: "How are times calculated?",
+    guide_a_how_time_calculated: "A relay time is calculated between the start of the current leg (the finish time of the previous relay) and the finish time you enter. By default the finish time is 1 minute ago — adjust it to the exact handoff moment if possible.",
+
+    guide_q_wrong_runner: "The wrong rider is shown. What do I do?",
+    guide_a_wrong_runner: "Tap the ✎ icon next to the current rider. You can change who is running and the planned lap count without resetting the current timer.",
+
+    guide_q_queue_empty: "The queue is empty and nobody is running. How do I continue?",
+    guide_a_queue_empty: "Add riders in the queue via the See the queue button, then tap Start a relay to resume.",
+
+    guide_q_queue_order: "How does the queue order work?",
+    guide_a_queue_order: "The queue is fully customisable. You can drag and drop riders to reorder them, edit their lap count, delete or add entries at any time. Auto-fill follows the order of who ran least recently.",
+
+    guide_q_autofill: "What is auto-fill?",
+    guide_a_autofill: "When enabled, the queue automatically tops itself up after each relay to maintain a minimum number of waiting riders. The order is based on who ran the earliest — whoever has been waiting the longest goes first.",
+
+    guide_q_change_laps: "Can I change the lap count for a queued rider?",
+    guide_a_change_laps: "Yes. In the queue, each row has a number field you can edit directly to adjust the planned laps.",
+
+    guide_q_where_stats: "Where do I see a rider's stats?",
+    guide_a_where_stats: "In the Team tab, tap any rider to open their profile. You will see their average lap time, average speed, total distance, elevation and full relay history.",
+
+    guide_q_export: "How do I export stats?",
+    guide_a_export: "In the Team tab, tap Event management then Export stats (CSV). The downloaded file can be opened in Excel, Numbers or Google Sheets.",
+
+    guide_q_reset: "How do I reset stats?",
+    guide_a_reset: "In the Team tab → Event management → Reset stats. You can choose to reset a specific rider or the whole team. This cannot be undone.",
 
   },
 }

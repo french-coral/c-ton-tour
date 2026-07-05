@@ -940,7 +940,10 @@ export async function pauseEvent(teamId) {
     // so the timer stops. The current rider stays set.
     const updateResult = await supabase
         .from('teams')
-        .update({ current_leg_started_at: null })
+        .update({ 
+            current_rider_id: null,
+            current_leg_started_at: null, 
+        })
         .eq('id', teamId)
 
     return { error: updateResult.error }
@@ -997,4 +1000,67 @@ export async function exportTeamStats(teamId) {
     if (result.error) return { error: result.error }
 
     return { laps: result.data, error: null }
+}
+
+// Import stats from CSV
+export async function importLapsFromCSV(teamId, parsedRows) {
+    const ridersResult = await supabase
+        .from('team_riders')
+        .select('id, name')
+        .eq('team_id', teamId)
+
+    if (ridersResult.error) {
+        return { error: ridersResult.error, imported: 0, skipped: 0 }
+    }
+
+    const riders = ridersResult.data
+
+    // Build a name → id lookup, lowercased for fuzzy matching
+    const riderByName = {}
+    for (const rider of riders) {
+        riderByName[rider.name.toLowerCase().trim()] = rider.id
+    }
+
+    const rowsToInsert = []
+    let skipped = 0
+
+    for (const row of parsedRows) {
+        const riderName = (row["Rider"] || "").toLowerCase().trim()
+        const riderId = riderByName[riderName]
+
+        if (!riderId) {
+            skipped = skipped + 1
+            continue
+        }
+
+        const lapCount = parseInt(row["Laps"])
+        const timeSeconds = parseFloat(row["Total Time (s)"])
+        const dateStr = row["Date"]
+
+        if (!lapCount || !timeSeconds) {
+            skipped = skipped + 1
+            continue
+        }
+
+        rowsToInsert.push({
+            team_rider_id: riderId,
+            lap_count: lapCount,
+            time_seconds: timeSeconds,
+            created_at: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
+        })
+    }
+
+    if (rowsToInsert.length === 0) {
+        return { error: null, imported: 0, skipped }
+    }
+
+    const insertResult = await supabase
+        .from('laps')
+        .insert(rowsToInsert)
+
+    if (insertResult.error) {
+        return { error: insertResult.error, imported: 0, skipped }
+    }
+
+    return { error: null, imported: rowsToInsert.length, skipped }
 }

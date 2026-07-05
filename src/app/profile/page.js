@@ -14,6 +14,7 @@ import { logout, leaveTeam } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { Settings } from "lucide-react"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
+import { useRouter } from "next/navigation"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 export default function ProfilePage() {
@@ -23,6 +24,9 @@ export default function ProfilePage() {
 
     // Language module
     const { t } = useLanguage()
+
+    // Router
+    const router = useRouter()
 
     // Profile
     const [profile, setProfile] = useState(null)
@@ -318,6 +322,16 @@ export default function ProfilePage() {
                                 >
                                     {t("profile_legal_information")}
                                 </a>
+{/* Guide */}
+                                <button
+                                    onClick={function () {
+                                        setIsSettingsOpen(false)
+                                        router.push("/guide")
+                                    }}
+                                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
+                                >
+                                    {t("guide_title")}
+                                </button>
 
 {/* Logout */}
                                 <button

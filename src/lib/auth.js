@@ -227,7 +227,7 @@ export async function leaveTeam() {
 // Password recovery
 export async function resetPassword(email) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
     })
     return { error }
 }
