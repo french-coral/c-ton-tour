@@ -245,7 +245,11 @@ export async function replenishQueueIfNeeded(teamId) {
     // We want the last queue entry to have the furthest future time
     for (let i = 0; i < existingQueue.length; i++) {
         const entry = existingQueue[i]
-        const futureTime = new Date(futureBase.getTime() + i * 60000).toISOString()
+        // existingQueue is sorted descending: index 0 = last entry (D)
+        // We want the last entry to have the LATEST future time, and the first entry to have the EARLIEST, so the next
+        // cycle continues A → B → C → D → A → B → C ...
+        const reverseOffset = (existingQueue.length - 1 - i) * 60000
+        const futureTime = new Date(futureBase.getTime() + reverseOffset).toISOString()
         lastRanTimes[entry.team_rider_id] = futureTime
     }
 

@@ -1,20 +1,23 @@
 "use client"
 
 import { login, getMyTeamRider, resetPassword  } from "@/lib/auth"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Link from "next/link"
 import { Eye, EyeClosed } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
 import { useRouteGuard } from "@/lib/useRouteGuard"
+import { useSearchParams } from "next/navigation"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 
-export default function Login() {
+function LoginInner() {
 
     // Route proofind
     const { isChecking } = useRouteGuard({ requireNoAuth: true })
     
     // t() nous donne le bon texte selon la langue active (fr ou en)
     const { t } = useLanguage()
+
+    const searchParams = useSearchParams()
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -26,6 +29,14 @@ export default function Login() {
     const [isForgotPassword, setIsForgotPassword] = useState(false)
     const [resetEmail, setResetEmail] = useState("")
     const [resetSent, setResetSent] = useState(false)
+
+
+    useEffect(function () {
+        const pendingCode = searchParams.get("pendingCode")
+        if (pendingCode) {
+            sessionStorage.setItem("pendingJoinCode", pendingCode)
+        }
+    }, [])
 
     async function handleSubmit(e) {
         // Empeche le comportement par defaut du form (reload complet de la page)
@@ -208,5 +219,14 @@ export default function Login() {
                 <Link href="/legal" className="underline text-sm text-gray-500 dark:text-gray-400 text-center mt-2 flex justify-center mt-10"> {t("legal_mentions")} </Link>
             </div>
         </div>
+    )
+}
+
+
+export default function Login() {
+    return (
+        <Suspense fallback={null}>
+            <LoginInner />
+        </Suspense>
     )
 }

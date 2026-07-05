@@ -22,10 +22,14 @@ function VerifyEmailInner() {
             } = await supabase.auth.getUser();
 
             if (user?.email_confirmed_at) {
-                clearInterval(interval);
-
-                // redirect
-                window.location.href = "/team-setup";
+                clearInterval(interval)
+                const pendingCode = sessionStorage.getItem("pendingJoinCode")
+                
+                if (pendingCode) {
+                    window.location.href = "/team-setup?code=" + pendingCode
+                } else {
+                    window.location.href = "/team-setup"
+                }
             }
 
             setChecking(false);

@@ -13,12 +13,18 @@ export default function EmailConfirmed() {
     const router = useRouter();
 
     useEffect(() => {
-        const t = setTimeout(() => {
-            router.push("/login");
-        }, 10000);
+        const timer = setTimeout(() => {
+            // Preserve the pending join code through login
+            const pendingCode = sessionStorage.getItem("pendingJoinCode")
+            if (pendingCode) {
+                router.push("/login?pendingCode=" + pendingCode)
+            } else {
+                router.push("/login")
+            }
+        }, 10000)
 
-        return () => clearTimeout(t);
-    }, [router]);
+        return () => clearTimeout(timer)
+    }, [router])
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 p-6">
@@ -37,7 +43,11 @@ export default function EmailConfirmed() {
                 </p>
 
                 <Link
-                    href="/login"
+                    href={
+                        typeof window !== "undefined" && sessionStorage.getItem("pendingJoinCode")
+                            ? "/login?pendingCode=" + sessionStorage.getItem("pendingJoinCode")
+                            : "/login"
+                    }
                     className="mt-6 inline-block bg-blue-600 text-white px-5 py-2 rounded-xl font-medium hover:bg-blue-700"
                 >
                     {t("mail_go_to_app_link")}
