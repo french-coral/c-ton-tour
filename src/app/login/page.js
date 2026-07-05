@@ -1,7 +1,7 @@
 "use client"
 
 import { login, getMyTeamRider, resetPassword  } from "@/lib/auth"
-import { useState, Suspense } from "react"
+import { useState, Suspense, useEffect } from "react"
 import Link from "next/link"
 import { Eye, EyeClosed } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
