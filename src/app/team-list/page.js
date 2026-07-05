@@ -11,6 +11,11 @@ import {
     updateQueueByStatus,
     getTeamStats,
     deleteRider,
+    stopEvent, 
+    pauseEvent, 
+    resetEvent, 
+    resetRiderStats, 
+    exportTeamStats
 } from "@/lib/queue"
 import { useLockBodyScroll } from "@/lib/useLockBodyScroll"
 import RiderDetailPopup from "@/components/RiderDetailPopup"
@@ -63,6 +68,12 @@ export default function TeamPage() {
     )
     const [isStatsOpen, setIsStatsOpen] = useState(true)
     const [riderToDelete, setRiderToDelete] = useState(null)
+
+    // Event handling
+    const [isEventMenuOpen, setIsEventMenuOpen] = useState(false)
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
+    const [isResetStatsOpen, setIsResetStatsOpen] = useState(false)
+    const [selectedRiderForReset, setSelectedRiderForReset] = useState("all")
 
     useLockBodyScroll(selectedRider !== null)
 
@@ -321,6 +332,87 @@ export default function TeamPage() {
         }
     }
 
+
+/////////////////////////////////////////////////////////////
+////	    	      Event handling   			    	////
+///////////////////////////////////////////////////////////
+
+
+    async function handleStopEvent() {
+        await stopEvent(teamId)
+        setIsEventMenuOpen(false)
+        reloadData()
+    }
+
+    async function handlePauseEvent() {
+        await pauseEvent(teamId)
+        setIsEventMenuOpen(false)
+        reloadData()
+    }
+
+    async function handleResetEvent() {
+        await resetEvent(teamId)
+        setIsResetConfirmOpen(false)
+        setIsEventMenuOpen(false)
+        reloadData()
+    }
+
+    async function handleResetStats() {
+        if (selectedRiderForReset === "all") {
+                for (const rider of riders) {
+                    await resetRiderStats(rider.id)
+            }
+        } else {
+            await resetRiderStats(selectedRiderForReset)
+        }
+        setIsResetStatsOpen(false)
+        setIsEventMenuOpen(false)
+    }
+
+    async function handleExportCSV() {
+        const result = await exportTeamStats(teamId)
+        if (result.error) return
+
+        const CIRCUIT_LENGTH_KM = 4.185
+        const rows = [
+            ["Rider", "Laps", "Total Time (s)", "Pace (s/lap)", "Speed (km/h)", "Date"]
+        ]
+
+        for (const lap of result.laps) {
+            const pace = lap.time_seconds / lap.lap_count
+            const speed = CIRCUIT_LENGTH_KM / (pace / 3600)
+            rows.push([
+                lap.team_rider.name,
+                lap.lap_count,
+                lap.time_seconds,
+                pace.toFixed(1),
+                speed.toFixed(1),
+                new Date(lap.created_at).toLocaleString(),
+            ])
+        }
+
+        const csvContent = rows.map(function (row) {
+            return row.join(",")
+        }).join("\n")
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.href = url
+        link.download = "ctontour_stats.csv"
+        link.click()
+        URL.revokeObjectURL(url)
+    }
+
+    function reloadData() {
+        // Re-uses your existing loadData pattern
+        const teamId2 = teamId
+        getTeamName(teamId2).then(function (r) { if (!r.error) setTeamName(r.name) })
+        getTeamRiders(teamId2).then(function (r) { if (!r.error) setRiders(r.riders) })
+        getTeamStats(teamId2).then(function (r) { if (!r.error) setTeamStats(r.stats) })
+    }
+
+
     if (isChecking) return null
 
     return (
@@ -341,7 +433,7 @@ export default function TeamPage() {
 
             <div className="max-w-sm mx-auto">
 
-    {/* Logo and team name */}
+{/* Logo and team name */}
                 <div className="flex justify-center">
                     <div className="relative w-50 h-24 flex items-center justify-center">
                             <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-2">
@@ -354,7 +446,8 @@ export default function TeamPage() {
                             />
                     </div>
                 </div>
-    {/* Team stats panel */} 
+
+{/* Team stats panel */} 
                 {teamStats ? (
                     <div
                         onClick={function () { setIsStatsOpen(!isStatsOpen) }}
@@ -415,7 +508,7 @@ export default function TeamPage() {
                         </div>
                     </div>
                     ) : null}
-    {/* Add a member */}            
+{/* Add a member */}            
                 <button
                     onClick={openAddMemberPopup}
                     className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm mb-3">
@@ -463,7 +556,7 @@ export default function TeamPage() {
                             </button>
                             </div>
                         ) : null}
-    {/* Invite window /w invite code */}
+{/* Invite window /w invite code */}
                         {addMemberStep === "invite" ? (
                             <div className="text-center">
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
@@ -487,7 +580,7 @@ export default function TeamPage() {
                                 </button>
                             </div>
                         ) : null}
-    {/*linked to an account */}
+{/*linked to an account */}
                         {addMemberStep === "create" ? (
                             <div className="flex flex-col gap-3">
                             <input
@@ -564,6 +657,149 @@ export default function TeamPage() {
                 />
                 ) : null}
             </div>
+
+{/* Team event window */} 
+            <button
+                onClick={function () { setIsEventMenuOpen(true) }}
+                className="w-full bg-transparent border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm text-gray-500 dark:text-gray-400 mt-3"
+            >
+                {t("team_event_menu")}
+            </button>
+
+            {isEventMenuOpen ? (
+            <div
+                className="fixed inset-0 bg-black/40 flex items-center justify-center p-5 z-40"
+                onClick={function () { setIsEventMenuOpen(false) }}
+            >
+                <div
+                    className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+                    onClick={function (e) { e.stopPropagation() }}
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <p className="font-medium text-lg">{t("team_event_menu")}</p>
+                        <button
+                            onClick={function () { setIsEventMenuOpen(false) }}
+                            className="text-gray-400 text-xl px-1"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+
+                        <button
+                            onClick={handleStopEvent}
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
+                        >
+                            {t("team_stop_event")}
+                        </button>
+
+                        <button
+                            onClick={handlePauseEvent}
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
+                        >
+                            {t("team_pause_event")}
+                        </button>
+
+                        <button
+                            onClick={function () { setIsResetStatsOpen(true) }}
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
+                        >
+                            {t("team_reset_stats")}
+                        </button>
+
+                        <button
+                            onClick={handleExportCSV}
+                            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl py-3 text-sm font-medium"
+                        >
+                            {t("team_export_csv")}
+                        </button>
+
+                        <button
+                            onClick={function () { setIsResetConfirmOpen(true) }}
+                            className="w-full bg-transparent border border-red-400 dark:border-red-600 rounded-xl py-3 text-sm font-medium text-red-500 dark:text-red-400 mt-2"
+                        >
+                            {t("team_reset_event")}
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+            ) : null}
+
+            {isResetConfirmOpen ? (
+            <div
+                className="fixed inset-0 bg-black/40 flex items-center justify-center p-5 z-50"
+                onClick={function () { setIsResetConfirmOpen(false) }}
+            >
+                <div
+                    className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+                    onClick={function (e) { e.stopPropagation() }}
+                >
+                    <p className="font-medium text-lg mb-2">{t("team_reset_event")}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        {t("team_reset_event_warning")}
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={function () { setIsResetConfirmOpen(false) }}
+                            className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm"
+                        >
+                            {t("main_cancel")}
+                        </button>
+                        <button
+                            onClick={handleResetEvent}
+                            className="flex-1 bg-transparent border border-red-400 rounded-xl py-2 text-sm font-medium text-red-500"
+                        >
+                            {t("team_reset_event_confirm")}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            ) : null}
+
+            {isResetStatsOpen ? (
+            <div
+                className="fixed inset-0 bg-black/40 flex items-center justify-center p-5 z-50"
+                onClick={function () { setIsResetStatsOpen(false) }}
+            >
+                <div
+                    className="bg-white dark:bg-gray-900 rounded-2xl p-5 w-full max-w-sm"
+                    onClick={function (e) { e.stopPropagation() }}
+                >
+                    <p className="font-medium text-lg mb-4">{t("team_reset_stats")}</p>
+
+                    <select
+                        value={selectedRiderForReset}
+                        onChange={function (e) { setSelectedRiderForReset(e.target.value) }}
+                        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 mb-4"
+                    >
+                        <option value="all">{t("team_reset_all_riders")}</option>
+                        {riders.map(function (rider) {
+                            return (
+                                <option key={rider.id} value={rider.id}>{rider.name}</option>
+                            )
+                        })}
+                    </select>
+
+                    <div className="flex gap-2">
+                        <button
+                            onClick={function () { setIsResetStatsOpen(false) }}
+                            className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2 text-sm"
+                        >
+                            {t("main_cancel")}
+                        </button>
+                        <button
+                            onClick={handleResetStats}
+                            className="flex-1 bg-transparent border border-red-400 rounded-xl py-2 text-sm font-medium text-red-500"
+                        >
+                            {t("team_reset_stats_confirm")}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            ) : null}
+
 {/* Onboarding */}
             {shouldShow ? (
                 <OnboardingPopup

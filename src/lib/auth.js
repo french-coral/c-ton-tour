@@ -174,7 +174,6 @@ export async function getUnclaimedRiders(teamId) {
         .from('team_riders')
         .select('id, name')
         .eq('team_id', teamId)
-        .eq('status', 'active')
         .is('profile_id', null)
 
     return { riders: ridersResult.data, error: ridersResult.error }

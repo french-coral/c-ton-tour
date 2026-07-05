@@ -406,7 +406,18 @@ export async function logLapAndAdvance(teamId, riderId, lapCount, finishTimeIso)
     const nextEntry = nextInQueueResult.data
 
     if (!nextEntry) {
-        return { error: { message: 'Queue is empty, cannot advance' } }
+        // Queue is empty — log the lap but leave nobody running
+        // Clear the current runner so the UI shows "nobody running"
+        const clearResult = await supabase
+        .from('teams')
+        .update({
+            current_rider_id: null,
+            current_leg_started_at: null,
+            current_leg_lap_count: 1,
+        })
+        .eq('id', teamId)
+
+        return { error: clearResult.error }
     }
 
     // Promote that next rider, but importantly, set their
@@ -843,6 +854,73 @@ export async function startEvent(teamId, firstRiderId, lapCount) {
     return { error: updateResult.error }
 }
 
+// Push current rider manually
+export async function startNextRiderInQueue(teamId) {
+
+    // Get the first rider in the queue
+    const nextInQueueResult = await supabase
+        .from("run_queue")
+        .select("*")
+        .eq("team_id", teamId)
+        .order("position", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+    if (nextInQueueResult.error) {
+        return { error: nextInQueueResult.error };
+    }
+
+    const nextEntry = nextInQueueResult.data;
+
+    if (!nextEntry) {
+        return { error: null }; // Queue is empty
+    }
+
+    const now = new Date().toISOString();
+
+    // Start their first lap
+    const updateResult = await supabase
+        .from("teams")
+        .update({
+            current_rider_id: nextEntry.team_rider_id,
+            current_leg_started_at: now,
+            current_leg_lap_count: nextEntry.lap_count,
+        })
+        .eq("id", teamId);
+
+    if (updateResult.error) {
+        return { error: updateResult.error };
+    }
+
+    // Remove them from the queue
+    const deleteResult = await supabase
+        .from("run_queue")
+        .delete()
+        .eq("id", nextEntry.id);
+
+    if (deleteResult.error) {
+        return { error: deleteResult.error };
+    }
+
+    // Replenish the queue if needed
+    const teamSettingsResult = await supabase
+        .from("teams")
+        .select("auto_fill")
+        .eq("id", teamId)
+        .single();
+
+    if (teamSettingsResult.error) {
+        return { error: teamSettingsResult.error };
+    }
+
+    if (teamSettingsResult.data.auto_fill) {
+        await replenishQueueIfNeeded(teamId);
+    }
+
+    return { error: null };
+}
+
+// Event handling
 export async function stopEvent(teamId) {
     const updateResult = await supabase
         .from('teams')
@@ -850,8 +928,73 @@ export async function stopEvent(teamId) {
             event_started: false,
             current_rider_id: null,
             current_leg_started_at: null,
+            current_leg_lap_count: 1,
         })
         .eq('id', teamId)
 
     return { error: updateResult.error }
+}
+
+export async function pauseEvent(teamId) {
+    // Pausing stores elapsed time conceptually — we just clear the start time
+    // so the timer stops. The current rider stays set.
+    const updateResult = await supabase
+        .from('teams')
+        .update({ current_leg_started_at: null })
+        .eq('id', teamId)
+
+    return { error: updateResult.error }
+}
+
+
+export async function resetEvent(teamId) {
+    // Delete all laps for this team's riders
+    const lapsResult = await supabase
+        .from('laps')
+        .delete()
+        .in(
+            'team_rider_id',
+            (await supabase
+                .from('team_riders')
+                .select('id')
+                .eq('team_id', teamId)
+            ).data.map(function (r) { return r.id })
+        )
+
+    if (lapsResult.error) return { error: lapsResult.error }
+
+    // Reset the event state
+    const updateResult = await supabase
+        .from('teams')
+        .update({
+            event_started: false,
+            current_rider_id: null,
+            current_leg_started_at: null,
+            current_leg_lap_count: 1,
+        })
+        .eq('id', teamId)
+
+    return { error: updateResult.error }
+}
+
+export async function resetRiderStats(teamRiderId) {
+    const deleteResult = await supabase
+        .from('laps')
+        .delete()
+        .eq('team_rider_id', teamRiderId)
+
+    return { error: deleteResult.error }
+}
+
+// Exsport team stats in CSV/XLS
+export async function exportTeamStats(teamId) {
+    const result = await supabase
+        .from('laps')
+        .select('time_seconds, lap_count, created_at, team_rider:team_rider_id(name, team_id)')
+        .eq('team_rider.team_id', teamId)
+        .order('created_at', { ascending: true })
+
+    if (result.error) return { error: result.error }
+
+    return { laps: result.data, error: null }
 }

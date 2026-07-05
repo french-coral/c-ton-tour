@@ -26,6 +26,7 @@ import {
   updateLapTime,
   updateQueueByStatus,
   startEvent,
+  startNextRiderInQueue,
 } from "@/lib/queue"
 // Draggable
 import { DndContext, closestCenter } from "@dnd-kit/core"
@@ -761,7 +762,10 @@ export default function MainPage() {
 
 {/* Current running rider */}
 			{team.event_started ? (
-				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-8">
+				<div className={team.event_started && !team.current_rider 
+					? "bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5" 
+					: "bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-8"}>
+
 					<p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t("main_currently_running")}</p>
 
 {/* Current runner editor */}
@@ -826,26 +830,33 @@ export default function MainPage() {
 									{team.current_leg_lap_count} {pluralizeTour(team.current_leg_lap_count)} {team.current_leg_lap_count === 1 ? t("main_planned_singular") : t("main_planned_plural")}
 								</p>
 							</div>
+							<button
+								onClick={openEditCurrentRider}
+								aria-label={t("main_edit_current_rider")}
+								className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-1">
+
+							✎
+
+							</button>
 						</>
 						) : (
-						<p className="text-gray-500 dark:text-gray-400 flex-1">{t("main_nobody_running")}</p>
+						<div className="flex flex-col items-center gap-3 py-2">
+							<p className="text-gray-500 dark:text-gray-400">{t("main_nobody_running")}</p>
+							<p className="text-xs text-gray-400 dark:text-gray-500">{t("main_fill_queue_to_continue")}</p>
+						</div>
 						)}
+							
 
-						<button
-							onClick={openEditCurrentRider}
-							aria-label={t("main_edit_current_rider")}
-							className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-1">
 
-						✎
-
-						</button>
 					</div>
 					)}
 {/* Elapsed time of current rider */}
-					<div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-						<span className="text-sm text-gray-500 dark:text-gray-400">{t("main_elapsed_time")}</span>
-						<span className="text-xl font-medium ml-auto">{formatSeconds(elapsedSeconds)}</span>
-					</div>
+					{team.current_rider ? (
+						<div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+							<span className="text-sm text-gray-500 dark:text-gray-400">{t("main_elapsed_time")}</span>
+							<span className="text-xl font-medium ml-auto">{formatSeconds(elapsedSeconds)}</span>
+						</div>
+					) : null}
 				</div>
 			
 			):(
@@ -858,6 +869,24 @@ export default function MainPage() {
 					{t("main_start_event")}
 				</button>
 			)}
+{/* Empty queue restart */}				
+			{team.event_started && !team.current_rider ? ( // We need at least one rider in queue to start a relay
+				<button
+					onClick={async () => {
+						const { error } = await startNextRiderInQueue(teamId);
+
+						if (error) {
+							console.error(error);
+						}
+						reloadEverything()
+					}}
+					className="w-full bg-blue-600 text-white rounded-xl py-3 font-medium text-sm my-5"
+				>
+					{t("main_start_relay")}
+				</button>				
+			) : null}
+
+
 				<div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 mb-8">
 {/* Next rider in line*/}
 					{nextEntry ? (
@@ -871,7 +900,7 @@ export default function MainPage() {
 							</div>
 							<div className="flex-1">
 								<p className="text-sm text-gray-500 dark:text-gray-400">
-									{team.event_started ? t("main_next_up") : t("main_first_rider")}
+									{team.event_started ? t("main_next_up") : t("main_first_relay")}
 								</p>
 								<p className="font-medium text-sm mt-0.5">{nextEntry.riderName}</p>
 							</div>
@@ -1099,7 +1128,9 @@ export default function MainPage() {
 				<button
 					onClick={openAddLapPopup}
 					disabled={!team.event_started}
-					className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2 disabled:opacity-40 disabled:cursor-not-allowed">
+					className={team.event_started
+						? "w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2 "
+						: "w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-3 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-700 mt-2 disabled:opacity-40 disabled:cursor-not-allowed relative z-[-1]"}>
 					
 					{t("main_add_relay")}
 

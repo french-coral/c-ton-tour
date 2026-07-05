@@ -21,31 +21,50 @@ export default function ResetPassword() {
     const [passwordVisibility, setPasswordVisibility] = useState(false)
 
     useEffect(function () {
+        async function init() {
         // Vérification instantanée : Est-ce qu'il y a une erreur d'authentification dans l'URL ?
-        if (typeof window !== "undefined" && window.location.hash) {
-            const hashParams = new URLSearchParams(window.location.hash.substring(1))
-            if (hashParams.has("error") || hashParams.get("error_code") === "otp_expired") {
-                setHasTimedOut(true) // Bascule instantanément sur l'écran d'erreur
+            if (typeof window !== "undefined" && window.location.hash) {
+                const hashParams = new URLSearchParams(window.location.hash.substring(1))
+
+                if (hashParams.get("error_code") === "otp_expired") {
+                    setHasTimedOut(true) // Bascule instantanément sur l'écran d'erreur
+                    return
+                }
+            }
+
+            // If there's an access_token in the hash, set the session manually
+            const accessToken = hashParams.get("access_token")
+            const refreshToken = hashParams.get("refresh_token")
+
+            if (accessToken && refreshToken) {
+                await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken,
+                })
+                setIsReady(true)
                 return
             }
-        }
 
-        // Si aucune erreur, on lance le timeout
-        const timer = setTimeout(function () {
-            setHasTimedOut(true)
-        }, 7000)
+            // Si aucune erreur, on lance le timeout
+            const timer = setTimeout(function () {
+                setHasTimedOut(true)
+            }, 7000)
 
-        const { data: listener } = supabase.auth.onAuthStateChange(function (event) {
-            if (event === "PASSWORD_RECOVERY") {
+        
+            const { data: listener } = supabase.auth.onAuthStateChange(function (event) {
+                if (event === "PASSWORD_RECOVERY") {
+                    clearTimeout(timer)
+                    setIsReady(true)
+                }
+            })
+
+            return function () {
                 clearTimeout(timer)
-                setIsReady(true)
+                listener.subscription.unsubscribe()
             }
-        })
-
-        return function () {
-            clearTimeout(timer)
-            listener.subscription.unsubscribe()
         }
+
+        init()
     }, [])
 
     async function handleSubmit(e) {

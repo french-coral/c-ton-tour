@@ -49,16 +49,26 @@ export default function ProfilePage() {
 
     useEffect(function () {
         async function loadData() {
+
             const profileResult = await getMyProfile()
-            if (!profileResult.error) {
+
+            if (!profileResult.error && profileResult.profile) {
                 setProfile(profileResult.profile)
-                setFullName(profileResult.profile.username)
+
+                // Only update the field if the value is actually non-empty
+                if (profileResult.profile.username) {
+                    setFullName(profileResult.profile.username)
+                }
             }
 
             const teamRiderResult = await getMyTeamMembership()
+
             if (!teamRiderResult.error && teamRiderResult.teamRider) {
                 setTeamRider(teamRiderResult.teamRider)
-                setTeamUsername(teamRiderResult.teamRider.name)
+
+                if (teamRiderResult.teamRider.name) {
+                    setTeamUsername(teamRiderResult.teamRider.name)
+                }
             }
         }
 

@@ -83,9 +83,11 @@ export const translations = {
     main_planned_plural: "prévus",
     main_start_event: "Démarrer l'événement",
     main_start_event_confirm: "C'est parti !",
-    main_first_rider: "Premier coureur",
+    main_first_relay: "Premier relai / Second coureur",
     main_first_rider_label: "Premier coureur",
     main_add_relay: "Ajouter un relai",
+    main_fill_queue_to_continue: "Remplis la file et démarre manuellement le prochain relai",
+    main_start_relay: "Démarrer un relai",
 
     // Rider popup
     rider_close: "Fermer",
@@ -151,6 +153,16 @@ export const translations = {
     team_delete_rider_title: "Supprimer ce rider ?",
     team_delete_rider_warning: "Cette action est irréversible. Tous les temps de",
     team_delete_rider_confirm: "Supprimer",
+    team_event_menu: "Gestion de l'événement",
+    team_stop_event: "Finir l'événement",
+    team_pause_event: "Mettre en pause le timer",
+    team_reset_stats: "Réinitialiser les stats",
+    team_reset_all_riders: "Tous les riders",
+    team_reset_stats_confirm: "Réinitialiser",
+    team_reset_event: "Réinitialiser l'événement",
+    team_reset_event_warning: "Cette action supprimera définitivement tous les temps et relais enregistrés.",
+    team_reset_event_confirm: "Tout supprimer",
+    team_export_csv: "Exporter les stats (CSV)",
 
 	// Team stats
 	team_stats_avg_time: "Temps moy. / tour",
@@ -307,9 +319,11 @@ export const translations = {
     main_planned_plural: "planned",
     main_start_event: "Start the event",
     main_start_event_confirm: "Let's go!",
-    main_first_rider: "First rider",
+    main_first_relay: "First relay / Second rider",
     main_first_rider_label: "First rider",
     main_add_relay: "Add relay",
+    main_fill_queue_to_continue: "Fill the queue and manually start the next relay",
+    main_start_relay: "Start a relay",
 
     // Rider popup
     rider_close: "Close",
@@ -374,6 +388,16 @@ export const translations = {
     team_delete_rider_title: "Delete this rider?",
     team_delete_rider_warning: "This is permanent. All lap times for",
     team_delete_rider_confirm: "Delete",
+    team_event_menu: "Event management",
+    team_stop_event: "End the event",
+    team_pause_event: "Pause the timer",
+    team_reset_stats: "Reset stats",
+    team_reset_all_riders: "All riders",
+    team_reset_stats_confirm: "Reset",
+    team_reset_event: "Reset the event",
+    team_reset_event_warning: "This will permanently delete all recorded times and relays.",
+    team_reset_event_confirm: "Delete everything",
+    team_export_csv: "Export stats (CSV)",
 
 	// Team stats
 	team_stats_avg_time: "Avg. time / lap",
