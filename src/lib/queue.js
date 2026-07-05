@@ -234,7 +234,20 @@ export async function replenishQueueIfNeeded(teamId) {
         return { error: lastRanResult.error }
     }
 
-    const lastRanTimes = lastRanResult.lastRanTimes
+    const lastRanTimes = { ...lastRanResult.lastRanTimes }
+
+    // for every rider already in the queue, shift their "last ran" time forward artificially so they sort after people not yet queued.
+    // We use a future timestamp, one per queue position, so their relative order within the queue is also preserved.
+    const futureBase = new Date()
+    futureBase.setFullYear(futureBase.getFullYear() + 1)
+
+    // existingQueue is sorted by position descending, so index 0 is the last entry
+    // We want the last queue entry to have the furthest future time
+    for (let i = 0; i < existingQueue.length; i++) {
+        const entry = existingQueue[i]
+        const futureTime = new Date(futureBase.getTime() + i * 60000).toISOString()
+        lastRanTimes[entry.team_rider_id] = futureTime
+    }
 
     // Sort riders so whoever ran longest ago comes first.
     // A rider who never ran (lastRanTimes is null) should come before
@@ -316,7 +329,7 @@ export async function replenishQueueIfNeeded(teamId) {
 
 
 
-export async function getAverageLapTimesForRiders(riderIds) {
+export async function getAverageLapTimesForRiders(riderIds, teamId = null) {
     const lapsResult = await supabase
         .from('laps')
         .select('team_rider_id, time_seconds, lap_count')
@@ -350,6 +363,38 @@ export async function getAverageLapTimesForRiders(riderIds) {
         }
 
         averages[riderId] = totalTime / totalLaps
+    }
+
+    // Second pass: for any rider with no laps, fall back to team average
+    const hasAnyNull = Object.values(averages).some(function (v) { return v === null })
+
+    if (hasAnyNull && teamId) {
+        let teamAverage = null
+
+        // Compute team average from laps we already fetched if possible
+        // Otherwise fetch from the whole team
+        if (allLaps.length > 0) {
+            let totalTime = 0
+            let totalLaps = 0
+            for (const lap of allLaps) {
+                totalTime = totalTime + lap.time_seconds
+                totalLaps = totalLaps + lap.lap_count
+            }
+            teamAverage = totalLaps > 0 ? totalTime / totalLaps : null
+        }
+
+        // If we still don't have it (all riders had no laps), fetch from DB
+        if (!teamAverage) {
+            teamAverage = await getTeamAverageLapTime(teamId)
+        }
+
+        if (teamAverage) {
+            for (const riderId of riderIds) {
+                if (averages[riderId] === null) {
+                    averages[riderId] = teamAverage
+                }
+            }
+        }
     }
 
     return { averages, error: null }
@@ -1063,4 +1108,26 @@ export async function importLapsFromCSV(teamId, parsedRows) {
     }
 
     return { error: null, imported: rowsToInsert.length, skipped }
+}
+
+// Get team averag lap time for first estimate
+async function getTeamAverageLapTime(teamId) {
+    const result = await supabase
+        .from('laps')
+        .select('time_seconds, lap_count, team_rider:team_rider_id!inner(team_id)')
+        .eq('team_rider.team_id', teamId)
+
+    if (result.error || !result.data || result.data.length === 0) {
+        return null
+    }
+
+    let totalTime = 0
+    let totalLaps = 0
+
+    for (const lap of result.data) {
+        totalTime = totalTime + lap.time_seconds
+        totalLaps = totalLaps + lap.lap_count
+    }
+
+    return totalLaps > 0 ? totalTime / totalLaps : null
 }

@@ -21,50 +21,47 @@ export default function ResetPassword() {
     const [passwordVisibility, setPasswordVisibility] = useState(false)
 
     useEffect(function () {
-        async function checkSession() {
-            const sessionResult = await supabase.auth.getSession()
-            if (sessionResult.data.session) {
-                setIsReady(true)
-            } else {
-                window.location.replace("/login")
-            }
-        }
-        checkSession()
-    }, [])
-
-    useEffect(function () {
         async function init() {
-        // Vérification instantanée : Est-ce qu'il y a une erreur d'authentification dans l'URL ?
+            // Check for error in hash first (expired link etc.)
             if (typeof window !== "undefined" && window.location.hash) {
                 const hashParams = new URLSearchParams(window.location.hash.substring(1))
 
-                if (hashParams.get("error_code") === "otp_expired") {
-                    setHasTimedOut(true) // Bascule instantanément sur l'écran d'erreur
+                if (hashParams.get("error_code") === "otp_expired" || hashParams.get("error")) {
+                    setHasTimedOut(true)
                     return
                 }
-            
-                // If there's an access_token in the hash, set the session manually
+
+                // If tokens are in the hash, set session manually
                 const accessToken = hashParams.get("access_token")
                 const refreshToken = hashParams.get("refresh_token")
 
-            
-
                 if (accessToken && refreshToken) {
-                    await supabase.auth.setSession({
+                    const { error } = await supabase.auth.setSession({
                         access_token: accessToken,
                         refresh_token: refreshToken,
                     })
-                    setIsReady(true)
+
+                    if (error) {
+                        setHasTimedOut(true)
+                    } else {
+                        setIsReady(true)
+                    }
                     return
                 }
             }
 
-            // Si aucune erreur, on lance le timeout
+            // No hash — check for existing session (PKCE flow, callback already handled it)
+            const sessionResult = await supabase.auth.getSession()
+            if (sessionResult.data.session) {
+                setIsReady(true)
+                return
+            }
+
+            // Nothing worked — listen for PASSWORD_RECOVERY event with timeout
             const timer = setTimeout(function () {
                 setHasTimedOut(true)
             }, 7000)
 
-        
             const { data: listener } = supabase.auth.onAuthStateChange(function (event) {
                 if (event === "PASSWORD_RECOVERY") {
                     clearTimeout(timer)

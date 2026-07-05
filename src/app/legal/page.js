@@ -7,11 +7,13 @@ import {
     FileCode,
     ScrollText,
     Scale,
-
-    
+    ArrowLeft,
 } from "lucide-react";
 
+
 export default function LegalHub() {
+
+
     return (
         <div className="min-h-screen p-5 relative">
 
@@ -19,7 +21,14 @@ export default function LegalHub() {
             <div className="fixed inset-0 bg-gray-100 dark:bg-gray-950 z-[-2]" />
 
             {/* Center container */}
-            <div className="max-w-sm mx-auto flex flex-col gap-5 pt-10">
+            <div className="max-w-sm mx-auto flex flex-col gap-5 pt-5">
+
+                <Link
+                    href="/profile"
+                    className="flex items-center text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                    <ArrowLeft></ArrowLeft>
+                </Link>
 
                 {/* Header */}
                 <div className="text-center">

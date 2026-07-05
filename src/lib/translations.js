@@ -228,6 +228,7 @@ export const translations = {
     legal_continue_text: "En continuant, vous acceptez les",
     legal_continue_follow_up: "et les",
     legal_mentions: "Mentions légales",
+    legal_back: "Retour",
 
     // Mail verifications
     mail_await_sign_in: "Connexion en cours...",
@@ -516,6 +517,7 @@ export const translations = {
     legal_continue_text: "By continuing, you agree to the",
     legal_continue_follow_up: "and",
     legal_mentions: "Legal notices",
+    legal_back: "Back",
 
     // Mail verifications
     mail_await_sign_in: "Signing you in ...",

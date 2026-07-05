@@ -179,7 +179,7 @@ export default function MainPage() {
 
 		// Average to calculate wait time in queue
 		if (riderIds.length > 0) {
-			const averagesResult = await getAverageLapTimesForRiders(riderIds)
+			const averagesResult = await getAverageLapTimesForRiders(riderIds, teamId)
 			if (!averagesResult.error) {
 			setAveragesByRiderId(averagesResult.averages)
 			}
@@ -840,7 +840,7 @@ export default function MainPage() {
 							</button>
 						</>
 						) : (
-						<div className="flex flex-col items-center gap-3 py-2">
+						<div className="flex flex-col items-left gap-3 py-2">
 							<p className="text-gray-500 dark:text-gray-400">{t("main_nobody_running")}</p>
 							<p className="text-xs text-gray-400 dark:text-gray-500">{t("main_fill_queue_to_continue")}</p>
 						</div>
