@@ -24,6 +24,8 @@
 .DS_Store
 *.pem
 runtime-contigency.txt
+.vscode/CtonTour.code-workspace
+todo.md
 
 # debug
 npm-debug.log*
